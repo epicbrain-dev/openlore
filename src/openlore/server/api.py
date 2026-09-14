@@ -6,6 +6,8 @@ import json
 import mimetypes
 import os
 import socket
+import threading
+import time
 import urllib.parse
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -532,12 +534,63 @@ class OpenLoreAPIHandler(BaseHTTPRequestHandler):
         self._send_error("Endpoint not found", HTTPStatus.NOT_FOUND)
 
 
+_udp_bridge_started = False
+_udp_bridge_lock = threading.Lock()
+
+
+def start_udp_livelink_listener(port: int = 11111) -> None:
+    """Start background UDP listener translating Live Link frames from DCCs to WebSockets."""
+    global _udp_bridge_started
+    with _udp_bridge_lock:
+        if _udp_bridge_started:
+            return
+        _udp_bridge_started = True
+
+    def _listen() -> None:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        try:
+            sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            sock.bind(("0.0.0.0", port))
+            sock.settimeout(1.0)
+            while True:
+                try:
+                    data, _ = sock.recvfrom(65535)
+                    try:
+                        packet = json.loads(data.decode("utf-8"))
+                        transform = packet.get("transform", {})
+                        ws_manager.broadcast_json({
+                            "type": "LIVELINK_FRAME",
+                            "subject": packet.get("subject_name", "Camera_StageA"),
+                            "translation": transform.get("translation", [0.0, 0.0, 0.0]),
+                            "rotation": transform.get("rotation", [0.0, 0.0, 0.0, 1.0]),
+                            "camera": packet.get("camera_frame_data", {}),
+                            "timestamp": time.time(),
+                        })
+                    except Exception:
+                        pass
+                except socket.timeout:
+                    continue
+                except Exception:
+                    break
+        except Exception:
+            pass
+        finally:
+            try:
+                sock.close()
+            except Exception:
+                pass
+
+    t = threading.Thread(target=_listen, daemon=True, name="openlore-udp-livelink")
+    t.start()
+
+
 def run_server(
     port: int = 8000,
     host: str = "127.0.0.1",
     static_dir: Optional[Path] = None,
 ) -> None:
     """Launch the multi-threaded OpenLore REST API server."""
+    start_udp_livelink_listener(int(os.getenv("OPENLORE_LIVELINK_PORT", "11111")))
     OpenLoreAPIHandler.static_dir = static_dir
     server_address = (host, port)
     httpd = ThreadingHTTPServer(server_address, OpenLoreAPIHandler)
