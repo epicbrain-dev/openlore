@@ -216,6 +216,118 @@ export default function CollaborationView() {
           </div>
         </div>
       </div>
+
+      {/* Unreal Engine 5 Live Link Virtual Production Bridge Panel */}
+      <div className="bg-neutral-900/60 p-5 rounded-xl border border-neutral-800 space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-indigo-500/20 border border-indigo-500/40 flex items-center justify-center font-bold text-indigo-400 text-xs">
+              UE5
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm font-semibold text-neutral-200">Unreal Engine 5 Live Link Bridge</h3>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-950/80 border border-emerald-700 text-emerald-400">
+                  DUPLEX ACTIVE
+                </span>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-neutral-950 border border-neutral-800 text-neutral-400">
+                  UDP 127.0.0.1:11111 @ 60 FPS
+                </span>
+              </div>
+              <p className="text-xs text-neutral-400 mt-0.5">
+                Real-time bi-directional telemetry synchronizing OpenUSD CRDT mutations with Unreal Engine Live Link viewports and in-camera VFX tracking.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => {
+                // Simulate an inbound camera packet from an on-stage virtual camera tracker
+                const newX = parseFloat((Math.random() * 10 + 20).toFixed(1));
+                const newY = parseFloat((Math.random() * 5 + 8).toFixed(1));
+                const newZ = parseFloat((Math.random() * 2 + 4).toFixed(1));
+                setCamX(newX);
+                setCamY(newY);
+                setCamZ(newZ);
+                setVectorClocks((prev) => ({ ...prev, studio_london: prev.studio_london + 1 }));
+                setAuditLog((prev) => [
+                  {
+                    id: Date.now(),
+                    studio: 'UE5-VP-STAGE-01',
+                    attr: '/World/CineCamera.xformOp:translate',
+                    val: `[${newX}, ${newY}, ${newZ}]`,
+                    status: 'CONVERGED (INBOUND)',
+                  },
+                  ...prev.slice(0, 5),
+                ]);
+              }}
+              className="px-3 py-1.5 bg-neutral-800 hover:bg-neutral-700 text-neutral-200 border border-neutral-700 text-xs font-medium rounded-lg flex items-center gap-1.5 transition-all cursor-pointer"
+            >
+              <Activity className="w-3.5 h-3.5 text-indigo-400" />
+              Simulate Inbound UE5 Telemetry
+            </button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2 border-t border-neutral-800 text-xs">
+          {/* Channel 1: CineCamera */}
+          <div className="bg-neutral-950 p-3 rounded-lg border border-neutral-800/80 space-y-1.5">
+            <div className="flex items-center justify-between">
+              <span className="font-semibold text-neutral-200">/World/CineCamera</span>
+              <span className="text-[10px] font-mono text-indigo-400 bg-indigo-950/60 px-1.5 py-0.5 rounded border border-indigo-900">
+                Camera Role
+              </span>
+            </div>
+            <div className="text-[11px] text-neutral-400 font-mono">
+              Live Link Subject: <span className="text-neutral-200">Camera_StageA</span>
+            </div>
+            <div className="text-[10px] text-neutral-500 font-mono">
+              Coord: Right-Handed (M) &rarr; Left-Handed (CM, Z-Up)
+            </div>
+          </div>
+
+          {/* Channel 2: Hero Character */}
+          <div className="bg-neutral-950 p-3 rounded-lg border border-neutral-800/80 space-y-1.5">
+            <div className="flex items-center justify-between">
+              <span className="font-semibold text-neutral-200">/World/Hero</span>
+              <span className="text-[10px] font-mono text-cyan-400 bg-cyan-950/60 px-1.5 py-0.5 rounded border border-cyan-900">
+                Transform Role
+              </span>
+            </div>
+            <div className="text-[11px] text-neutral-400 font-mono">
+              Live Link Subject: <span className="text-neutral-200">Hero_Character</span>
+            </div>
+            <div className="text-[10px] text-neutral-500 font-mono">
+              Pose: UsdSkel Dual-Rig Variants
+            </div>
+          </div>
+
+          {/* Channel 3: Virtual LED Volume */}
+          <div className="bg-neutral-950 p-3 rounded-lg border border-neutral-800/80 space-y-1.5">
+            <div className="flex items-center justify-between">
+              <span className="font-semibold text-neutral-200">/World/Stage_LED</span>
+              <span className="text-[10px] font-mono text-amber-400 bg-amber-950/60 px-1.5 py-0.5 rounded border border-amber-900">
+                Stage Bounds
+              </span>
+            </div>
+            <div className="text-[11px] text-neutral-400 font-mono">
+              Live Link Subject: <span className="text-neutral-200">LED_Volume</span>
+            </div>
+            <div className="text-[10px] text-neutral-500 font-mono">
+              ICVFX 270&deg; Volume Display Matrix
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between pt-2 border-t border-neutral-800/60 text-[11px] font-mono text-neutral-400">
+          <div>Export plugin to project: <code className="text-indigo-300">openlore livelink export-plugin --output-dir ./Plugins/OpenLoreLiveLink</code></div>
+          <div className="text-emerald-400 flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+            60 FPS Zero-Copy Broadcast Active
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

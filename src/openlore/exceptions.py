@@ -29,3 +29,7 @@ class StagePromotionError(OpenLoreError):
 
 class SecurityPolicyError(OpenLoreError):
     """Raised when an action violates eBPF or partner isolation enclaves."""
+
+
+class LiveLinkBridgeError(OpenLoreError):
+    """Raised when Unreal Engine Live Link connection, encoding, or handshake fails."""

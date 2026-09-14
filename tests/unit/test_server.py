@@ -91,6 +91,23 @@ class TestOpenLoreAPIServer(unittest.TestCase):
         self.assertIn("stage_uri", data)
         self.assertIn("royalty_splits", data)
 
+    def test_livelink_endpoints(self) -> None:
+        # 1. GET status
+        status_data = self._get_json("/api/livelink/status")
+        self.assertIn("status", status_data)
+        self.assertIn("bound_subjects", status_data)
+        self.assertIn("coordinate_settings", status_data)
+
+        # 2. POST start
+        start_res = self._post_json("/api/livelink/start", {"mode": "duplex", "fps": 30.0})
+        self.assertEqual(start_res["status"], "ONLINE")
+        self.assertEqual(start_res["mode"], "duplex")
+
+        # 3. POST stop
+        stop_res = self._post_json("/api/livelink/stop", {})
+        self.assertEqual(stop_res["status"], "STOPPED")
+        self.assertEqual(stop_res["mode"], "stopped")
+
     def test_not_found_endpoint(self) -> None:
         url = f"{self.base_url}/api/nonexistent_route"
         try:

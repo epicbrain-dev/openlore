@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 
 from openlore.collaboration.kafka_stream import KafkaEventStream
+from openlore.bridge.unreal.bridge import UnrealLiveLinkBridge
 from openlore.collaboration.resolver import EdgeResolverDaemon
 from openlore.compilation.grid import ProductionCatalog, WorkerGridDispatcher
 from openlore.core.cas import ContentAddressedStorage
@@ -36,6 +37,7 @@ class OpenLoreAPIHandler(BaseHTTPRequestHandler):
     catalog: ProductionCatalog = ProductionCatalog()
     promotion_gate: StagePromotionGate = StagePromotionGate()
     shared_daemon: Optional[EdgeResolverDaemon] = None
+    shared_livelink_bridge: Optional[UnrealLiveLinkBridge] = None
 
     def _send_cors_headers(self) -> None:
         self.send_header("Access-Control-Allow-Origin", "*")
@@ -214,7 +216,14 @@ class OpenLoreAPIHandler(BaseHTTPRequestHandler):
                 })
                 return
 
-        # 8. Static Web Frontend Hosting
+        # 8. Unreal Engine Live Link Status
+        elif path == "/api/livelink/status":
+            if self.shared_livelink_bridge is None:
+                self.__class__.shared_livelink_bridge = UnrealLiveLinkBridge(edge_daemon=self.shared_daemon)
+            self._send_json(self.shared_livelink_bridge.get_status())
+            return
+
+        # 9. Static Web Frontend Hosting
         if self.static_dir and self.static_dir.is_dir():
             req_path = path.lstrip("/") or "index.html"
             file_path = (self.static_dir / req_path).resolve()
@@ -369,6 +378,25 @@ class OpenLoreAPIHandler(BaseHTTPRequestHandler):
             )
             job = dispatcher.get_job_status(workflow_id)
             self._send_json(job)
+            return
+
+        # 7. Start Unreal Live Link Stream
+        elif path == "/api/livelink/start":
+            mode = body.get("mode", "duplex")
+            fps = float(body.get("fps", 60.0))
+            if self.shared_livelink_bridge is None:
+                self.__class__.shared_livelink_bridge = UnrealLiveLinkBridge(edge_daemon=self.shared_daemon)
+            self.shared_livelink_bridge.start(mode=mode, target_fps=fps)
+            self._send_json(self.shared_livelink_bridge.get_status())
+            return
+
+        # 8. Stop Unreal Live Link Stream
+        elif path == "/api/livelink/stop":
+            if self.shared_livelink_bridge:
+                self.shared_livelink_bridge.stop()
+                self._send_json(self.shared_livelink_bridge.get_status())
+            else:
+                self._send_json({"status": "STOPPED", "mode": "stopped"})
             return
 
         self._send_error("Endpoint not found", HTTPStatus.NOT_FOUND)

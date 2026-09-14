@@ -94,6 +94,22 @@ def create_parser() -> argparse.ArgumentParser:
     web_cmd.add_argument("--host", default="127.0.0.1", help="Host address (default 127.0.0.1)")
     web_cmd.add_argument("--static-dir", default="./web/dist", help="Directory containing compiled React frontend")
 
+    # livelink
+    livelink_cmd = subparsers.add_parser("livelink", help="Unreal Engine 5 Live Link bridge and plugin generator")
+    livelink_subs = livelink_cmd.add_subparsers(dest="subaction", help="Live Link action")
+
+    stream_cmd = livelink_subs.add_parser("stream", help="Run Live Link real-time streaming bridge")
+    stream_cmd.add_argument("--host", default="127.0.0.1", help="Broadcast target host")
+    stream_cmd.add_argument("--port", type=int, default=11111, help="Broadcast target UDP port")
+    stream_cmd.add_argument("--receive-port", type=int, default=11112, help="Inbound telemetry UDP port")
+    stream_cmd.add_argument("--fps", type=float, default=60.0, help="Target broadcast frame rate")
+    stream_cmd.add_argument("--mode", choices=["broadcast", "receive", "duplex"], default="duplex", help="Bridge operational mode")
+    stream_cmd.add_argument("--stage-uri", default="openlore://stages/root.usda", help="OpenUSD Stage URI")
+
+    export_plugin_cmd = livelink_subs.add_parser("export-plugin", help="Generate ready-to-build Unreal Engine 5 C++ Plugin")
+    export_plugin_cmd.add_argument("--output-dir", default="./plugins/OpenLoreLiveLink", help="Output directory for UE5 plugin")
+    export_plugin_cmd.add_argument("--name", default="OpenLoreLiveLink", help="Plugin name")
+
     return parser
 
 
@@ -384,6 +400,45 @@ def main(args: Sequence[str] | None = None) -> int:
         static_p = Path(parsed_args.static_dir)
         run_server(port=parsed_args.port, host=parsed_args.host, static_dir=static_p if static_p.is_dir() else None)
         return 0
+
+    if parsed_args.command == "livelink":
+        from openlore.bridge.unreal.bridge import UnrealLiveLinkBridge
+        from openlore.bridge.unreal.plugin_scaffold import UnrealPluginScaffolder
+
+        if parsed_args.subaction == "export-plugin":
+            out_dir = Path(parsed_args.output_dir)
+            files = UnrealPluginScaffolder.generate_plugin(out_dir, plugin_name=parsed_args.name)
+            print(f"[OpenLore Live Link] Generated UE5 C++ Plugin in '{out_dir}':")
+            for key, p in files.items():
+                print(f"  - {key}: {p}")
+            print(f"[OpenLore Live Link] Ready to drop into <YourProject>/Plugins/{parsed_args.name}")
+            return 0
+
+        elif parsed_args.subaction == "stream":
+            bridge = UnrealLiveLinkBridge(
+                broadcast_host=parsed_args.host,
+                broadcast_port=parsed_args.port,
+                receive_port=parsed_args.receive_port,
+            )
+            print(f"[OpenLore Live Link] Starting bridge in '{parsed_args.mode}' mode @ {parsed_args.fps} FPS...")
+            print(f"  Broadcast target: {parsed_args.host}:{parsed_args.port}")
+            print(f"  Inbound receiver port: {parsed_args.receive_port}")
+            bridge.start(mode=parsed_args.mode, target_fps=parsed_args.fps)
+            print("[OpenLore Live Link] Active subjects bound:")
+            for subj in bridge.get_status()["bound_subjects"]:
+                print(f"  - {subj['prim_path']} -> {subj['subject_name']} ({subj['role']})")
+            print("[OpenLore Live Link] Bridge operational. Press Ctrl+C to stop.")
+            try:
+                import time
+                while True:
+                    time.sleep(1.0)
+            except KeyboardInterrupt:
+                print("\n[OpenLore Live Link] Stopping bridge...")
+                bridge.stop()
+            return 0
+        else:
+            parser.parse_args(["livelink", "--help"])
+            return 0
 
     print(f"[OpenLore] Command '{parsed_args.command}' execution stub.")
     return 0

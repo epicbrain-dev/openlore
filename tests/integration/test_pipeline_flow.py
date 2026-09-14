@@ -23,6 +23,12 @@ from pathlib import Path
 import blake3
 from pxr import Gf, Sdf, Usd, UsdGeom
 
+from openlore.bridge.unreal import (
+    LiveLinkFrameData,
+    LiveLinkSubjectType,
+    UnrealLiveLinkBridge,
+    UnrealPluginScaffolder,
+)
 from openlore.collaboration.crdt import CRDTSceneReplica
 from openlore.collaboration.kafka_stream import KafkaEventStream, _InMemoryEventBus
 from openlore.collaboration.resolver import EdgeResolverDaemon
@@ -335,7 +341,48 @@ class TestFullAssetPipelineFlow(unittest.TestCase):
         reloaded_cat.load_catalog(cat_file)
         self.assertEqual(len(reloaded_cat.list_all_builds()), 3)
 
-        print("\n[OpenLore Integration] All 9 architectural pillars successfully executed and verified end-to-end!")
+        # =====================================================================
+        # PILLAR 10: Virtual Production Unreal Engine 5 Live Link Bridge
+        # =====================================================================
+        livelink_bridge = UnrealLiveLinkBridge(
+            edge_daemon=daemon_london,
+            broadcast_host="127.0.0.1",
+            broadcast_port=11188,
+            receive_port=11189,
+        )
+        livelink_bridge.start(mode="duplex")
+
+        # Outbound: Camera move in OpenUSD stage -> Live Link telemetry
+        camera_mutation = daemon_london.record_local_edit(
+            prim_path="/World/CineCamera",
+            attribute_name="xformOp:translate",
+            value=[12.5, 4.0, 2.0],
+        )
+        handled = livelink_bridge.handle_crdt_mutation(camera_mutation)
+        self.assertTrue(handled)
+
+        # Inbound: Virtual camera tracking device from stage UE5 -> OpenLore CRDT
+        ue_tracker_frame = LiveLinkFrameData(
+            subject_name="Camera_StageA",
+            subject_type=LiveLinkSubjectType.CAMERA,
+            frame_number=120,
+            translation=(1250.0, -400.0, 200.0),  # 12.5m, 4.0m, 2.0m in USD
+            field_of_view=42.0,
+        )
+        livelink_bridge._handle_inbound_frame(ue_tracker_frame)
+
+        livelink_status = livelink_bridge.get_status()
+        self.assertEqual(livelink_status["status"], "ONLINE")
+        self.assertGreaterEqual(livelink_status["metrics"]["frames_bridged_out"], 1)
+        self.assertGreaterEqual(livelink_status["metrics"]["frames_bridged_in"], 1)
+        livelink_bridge.stop()
+
+        # Verify UE5 C++ plugin scaffolding export
+        plugin_files = UnrealPluginScaffolder.generate_plugin(self.builds_dir / "UnrealPlugins" / "OpenLoreLiveLink")
+        self.assertTrue(plugin_files["uplugin"].is_file())
+        self.assertTrue(plugin_files["source_cpp"].is_file())
+
+        print("\n[OpenLore Integration] All 10 architectural pillars successfully executed and verified end-to-end!")
 
 
 if __name__ == "__main__":

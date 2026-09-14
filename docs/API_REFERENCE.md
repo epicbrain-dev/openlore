@@ -8,7 +8,7 @@ The OpenLore software architecture provides a unified cross-media digital asset 
 
 ## Architecture Overview
 
-OpenLore is divided into 10 modular core domains:
+OpenLore is divided into 11 modular core domains:
 
 ```
 src/openlore/
@@ -19,6 +19,7 @@ src/openlore/
 ├── provenance/      # OpenUSD DAG harvester, HMAC-SHA256 signed manifests, OPA Rego royalty accounting
 ├── partner/         # Outbound geometric decimation/clay proxying, quarantined pre-flight linter, TD promotion gates, eBPF zero-egress
 ├── compilation/     # Temporal workflow dispatcher, Kubernetes Argo DAG generator, Unreal/Unity compilers, Shot point cache baker
+├── bridge/          # Unreal Engine 5 Live Link Bridge, UDP streaming, C++ plugin scaffold
 ├── server/          # Zero-dependency Python REST API & SPA static hosting for studio dashboards
 ├── cli/             # Unified production command-line interface
 └── exceptions.py    # Standardized domain error taxonomy
@@ -214,7 +215,31 @@ Initializes and serves `ThreadingHTTPServer` bound to the designated network int
 
 ---
 
-## 9. CLI Command Summary
+## 9. `openlore.bridge`
+
+### `UnrealLiveLinkBridge(edge_daemon, broadcast_host, broadcast_port, receive_port, studio_id)`
+Duplex virtual production bridge synchronizing OpenLore OpenUSD scenes and CRDT mutations with Unreal Engine 5 Live Link:
+- `start(mode: str = "duplex", target_fps: float = 60.0)`: Starts provider broadcasting and/or receiver socket listening.
+- `stop()`: Shuts down background loops and closes network sockets.
+- `bind_subject(prim_path: str, subject_name: str, subject_type: LiveLinkSubjectType)`: Maps OpenUSD prims (`/World/CineCamera`) to Live Link subjects (`Camera_StageA`).
+- `handle_crdt_mutation(mutation: CRDTPartialMutation) -> bool`: Outbound translation from OpenUSD right-handed coordinates to Unreal left-handed centimeters, emitting Live Link frame.
+- `get_status() -> Dict[str, Any]`: Returns operational mode, active subjects, and packet throughput metrics.
+
+### `CoordinateConverter`
+High-precision coordinate transformation utility between OpenUSD (Right-Handed, meters/cm) and Unreal Engine 5 (Left-Handed, Z-Up centimeters):
+- `usd_to_unreal_position(pos_usd, up_axis="Z", meters_per_unit=1.0) -> Tuple[float, float, float]`
+- `unreal_to_usd_position(pos_ue, up_axis="Z", meters_per_unit=1.0) -> Tuple[float, float, float]`
+- `usd_to_unreal_quaternion(quat_usd, up_axis="Z") -> Tuple[float, float, float, float]`
+- `euler_to_quaternion(roll, pitch, yaw) -> Tuple[float, float, float, float]`
+- `quaternion_to_euler(quat) -> Tuple[float, float, float]`
+
+### `UnrealPluginScaffolder`
+Generates ready-to-build C++ Unreal Engine 5 Plugin projects:
+- `generate_plugin(output_dir: Path, plugin_name: str = "OpenLoreLiveLink") -> Dict[str, Path]`: Authors `.uplugin`, `Build.cs`, `ILiveLinkSource` implementation, and editor Python bridge scripts.
+
+---
+
+## 10. CLI Command Summary
 
 | Command | Subcommand / Options | Description |
 |---|---|---|
@@ -227,4 +252,5 @@ Initializes and serves `ThreadingHTTPServer` bound to the designated network int
 | `openlore catalog`| `list` | Inspect Central Production Catalog builds. |
 | `openlore export` | `--stage`, `--target` | Introspect DAG, evaluate OPA royalties, and trigger builds. |
 | `openlore web` | `--host`, `--port`, `--static-dir` | Launch REST API server & serve React Studio Cockpit dashboard. |
+| `openlore livelink`| `stream`, `export-plugin` | Run real-time UE5 Live Link bridge or export turnkey C++ plugin. |
 
