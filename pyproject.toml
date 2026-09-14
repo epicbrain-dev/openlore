@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "openlore"
-version = "0.1.0"
+version = "1.0.0"
 description = "Git for 3D worlds, game lore, and Hollywood pipelines."
 readme = "README.md"
 requires-python = ">=3.9"
@@ -25,7 +25,7 @@ keywords = [
     "virtual-production"
 ]
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
     "Topic :: Multimedia :: Graphics :: 3D Modeling",
     "Programming Language :: Python :: 3",
