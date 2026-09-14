@@ -2,6 +2,11 @@
 
 from __future__ import annotations
 
+from openlore.compilation.catalog_backend import (
+    AbstractCatalogBackend,
+    JsonFileCatalogBackend,
+    RelationalCatalogBackend,
+)
 from openlore.compilation.engine_package import EnginePackageCompiler
 from openlore.compilation.grid import (
     CompilationJob,
@@ -18,4 +23,8 @@ __all__ = [
     "CompilationJob",
     "CompilationJobStatus",
     "ProductionCatalog",
+    "AbstractCatalogBackend",
+    "JsonFileCatalogBackend",
+    "RelationalCatalogBackend",
 ]
+

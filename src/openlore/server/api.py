@@ -15,9 +15,11 @@ from openlore.collaboration.kafka_stream import KafkaEventStream
 from openlore.bridge.unreal.bridge import UnrealLiveLinkBridge
 from openlore.collaboration.resolver import EdgeResolverDaemon
 from openlore.compilation.grid import ProductionCatalog, WorkerGridDispatcher
+from openlore.config import get_config
 from openlore.core.cas import ContentAddressedStorage
 from openlore.core.stage import StageCompositionManager
 from openlore.narrative.graph import NarrativeGraphClient
+from openlore.narrative.rag import GraphRAGNarrativeAssistant
 from openlore.narrative.timeline import TimelineBranchManager
 from openlore.narrative.validator import SHACLContinuityValidator
 from openlore.partner.decimation import OutboundDecimationPipeline, ProxyStageConfig
@@ -152,9 +154,13 @@ class OpenLoreAPIHandler(BaseHTTPRequestHandler):
         # 1. System Status
         if path == "/api/status":
             cas = ContentAddressedStorage(self.cas_dir)
+            cfg = get_config()
             self._send_json({
                 "status": "ONLINE",
                 "version": "1.0.0",
+                "environment": cfg.environment,
+                "cas_backend": cfg.cas_backend,
+                "catalog_backend": cfg.catalog_backend,
                 "system": "OpenLore Transmedia Production Backbone",
                 "cas_storage_root": str(cas.storage_root.resolve()),
                 "services": {
@@ -163,6 +169,7 @@ class OpenLoreAPIHandler(BaseHTTPRequestHandler):
                     "crdt_resolver": "Active",
                     "opa_accounting": "Active",
                     "temporal_grid": "Active",
+                    "graph_rag": "Active",
                 },
                 "studios": [
                     {"id": "studio_london", "location": "London, UK", "role": "Virtual Production Stage (LED Volume)"},
@@ -497,6 +504,23 @@ class OpenLoreAPIHandler(BaseHTTPRequestHandler):
                 self._send_json(self.shared_livelink_bridge.get_status())
             else:
                 self._send_json({"status": "STOPPED", "mode": "stopped"})
+            return
+
+        # 9. SPARQL Graph RAG Narrative Lore Assistant
+        elif path == "/api/narrative/assistant":
+            client = NarrativeGraphClient()
+            graph_path = Path("./data/lore/graph.trig")
+            if graph_path.is_file():
+                client.load_from_file(graph_path)
+
+            shapes_path = Path("./schemas/shacl/continuity_shapes.ttl")
+            validator = SHACLContinuityValidator(shapes_path) if shapes_path.is_file() else None
+            assistant = GraphRAGNarrativeAssistant(graph_client=client, validator=validator)
+
+            user_query = body.get("query", "Audit timeline for temporal paradoxes")
+            timeline_uri = body.get("timeline_uri")
+            resp = assistant.query(user_query, timeline_uri=timeline_uri)
+            self._send_json(resp.to_dict())
             return
 
         self._send_error("Endpoint not found", HTTPStatus.NOT_FOUND)

@@ -1,0 +1,136 @@
+version: '3.8'
+
+services:
+  # 1. OpenLore Web Studio & REST/WebSocket Server (Staging Profile)
+  openlore-api-staging:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: openlore-api-staging
+    restart: unless-stopped
+    ports:
+      - "8080:8000"
+      - "11111:11111/udp"
+    environment:
+      - OPENLORE_ENV=staging
+      - OPENLORE_AUTH_ENABLED=true
+      - OPENLORE_CAS_BACKEND=s3
+      - OPENLORE_S3_ENDPOINT_URL=http://minio:9000
+      - OPENLORE_S3_BUCKET_NAME=openlore-staging-cas
+      - OPENLORE_S3_ACCESS_KEY=openloreadmin
+      - OPENLORE_S3_SECRET_KEY=openloresecurepassword2026
+      - OPENLORE_CATALOG_BACKEND=sql
+      - OPENLORE_DATABASE_URL=postgresql://openlore:openlore_staging_pass@postgres:5432/openlore_staging
+      - OPENLORE_KAFKA_SERVERS=kafka:29092
+      - OPENLORE_OPA_URL=http://opa:8181/v1/data/openlore/royalties
+      - OPENLORE_TRIPLESTORE_URL=http://triplestore:3030/openlore
+      - OPENLORE_TEMPORAL_URL=temporal:7233
+    volumes:
+      - openlore_staging_cas:/app/data/cas
+      - openlore_staging_stages:/app/stages
+      - openlore_staging_builds:/app/builds
+    depends_on:
+      - postgres
+      - minio
+      - kafka
+      - opa
+      - triplestore
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/status"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  # 2. Staging Relational PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: openlore-postgres-staging
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=openlore
+      - POSTGRES_PASSWORD=openlore_staging_pass
+      - POSTGRES_DB=openlore_staging
+    volumes:
+      - openlore_postgres_staging_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U openlore -d openlore_staging"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # 3. MinIO S3-Compatible Content Addressed Storage
+  minio:
+    image: minio/minio:RELEASE.2024-05-28T17-19-04Z
+    container_name: openlore-minio-staging
+    restart: unless-stopped
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      - MINIO_ROOT_USER=openloreadmin
+      - MINIO_ROOT_PASSWORD=openloresecurepassword2026
+    command: server /data --console-address ":9001"
+    volumes:
+      - openlore_minio_staging_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  # 4. Redpanda Kafka Streaming Broker
+  kafka:
+    image: vectorized/redpanda:v23.3.11
+    container_name: openlore-kafka-staging
+    restart: unless-stopped
+    ports:
+      - "9092:9092"
+    command:
+      - redpanda start
+      - --smp 1
+      - --memory 512M
+      - --reserve-memory 0M
+      - --overprovisioned
+      - --node-id 0
+      - --check=false
+      - --kafka-addr PLAINTEXT://0.0.0.0:29092,OUTSIDE://0.0.0.0:9092
+      - --advertise-kafka-addr PLAINTEXT://kafka:29092,OUTSIDE://localhost:9092
+    volumes:
+      - openlore_redpanda_staging_data:/var/lib/redpanda/data
+
+  # 5. Open Policy Agent (OPA)
+  opa:
+    image: openpolicyagent/opa:0.65.0
+    container_name: openlore-opa-staging
+    restart: unless-stopped
+    ports:
+      - "8181:8181"
+    command:
+      - "run"
+      - "--server"
+      - "--addr=0.0.0.0:8181"
+      - "/policies"
+    volumes:
+      - ./schemas/opa:/policies
+
+  # 6. W3C RDF Triplestore (Apache Jena Fuseki)
+  triplestore:
+    image: secoresearch/fuseki:5.0.0
+    container_name: openlore-triplestore-staging
+    restart: unless-stopped
+    ports:
+      - "3030:3030"
+    environment:
+      - ADMIN_PASSWORD=admin
+    volumes:
+      - ./schemas/ontology:/fuseki/databases
+
+volumes:
+  openlore_staging_cas:
+  openlore_staging_stages:
+  openlore_staging_builds:
+  openlore_postgres_staging_data:
+  openlore_minio_staging_data:
+  openlore_redpanda_staging_data:

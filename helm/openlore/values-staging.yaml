@@ -1,0 +1,52 @@
+replicaCount: 1
+
+image:
+  repository: openlore/openlore-api
+  pullPolicy: Always
+  tag: "staging-latest"
+
+service:
+  type: ClusterIP
+  port: 8000
+  udpBroadcastPort: 11111
+  udpReceivePort: 11112
+
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    nginx.ingress.kubernetes.io/websocket-services: "openlore-service"
+  hosts:
+    - host: openlore-staging.studio.internal
+      paths:
+        - path: /
+          pathType: Prefix
+
+resources:
+  limits:
+    cpu: 1000m
+    memory: 2Gi
+  requests:
+    cpu: 250m
+    memory: 512Mi
+
+persistence:
+  cas:
+    enabled: true
+    size: 50Gi
+    storageClass: "standard"
+
+env:
+  environment: "staging"
+  authEnabled: "true"
+  casBackend: "s3"
+  s3EndpointUrl: "http://openlore-minio:9000"
+  s3BucketName: "openlore-staging-cas"
+  catalogBackend: "sql"
+  databaseUrl: "postgresql://openlore:openlore_staging_pass@openlore-postgres:5432/openlore_staging"
+  kafkaServers: "openlore-kafka:9092"
+  opaUrl: "http://openlore-opa:8181/v1/data/openlore/royalties"
+  triplestoreUrl: "http://openlore-fuseki:3030/openlore"
+  temporalUrl: "openlore-temporal:7233"

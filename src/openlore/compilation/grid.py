@@ -12,8 +12,14 @@ from typing import Any, Dict, List, Optional
 
 import blake3
 
+from openlore.compilation.catalog_backend import (
+    AbstractCatalogBackend,
+    JsonFileCatalogBackend,
+    RelationalCatalogBackend,
+)
 from openlore.compilation.engine_package import EnginePackageCompiler
 from openlore.compilation.shot_baker import OfflineShotBaker
+from openlore.config import get_config
 
 
 class CompilationJobStatus(str, Enum):
@@ -54,8 +60,14 @@ class CompilationJob:
 class ProductionCatalog:
     """Central registry cataloging compiled real-time engine packages and cinematic point caches."""
 
-    def __init__(self) -> None:
-        self._records: List[Dict[str, Any]] = []
+    def __init__(self, backend: Optional[AbstractCatalogBackend] = None) -> None:
+        cfg = get_config()
+        if backend is not None:
+            self.backend = backend
+        elif cfg.catalog_backend in ("sql", "postgres", "postgresql"):
+            self.backend = RelationalCatalogBackend(cfg.database_url)
+        else:
+            self.backend = JsonFileCatalogBackend()
 
     def register_build(
         self,
@@ -65,33 +77,28 @@ class ProductionCatalog:
         cas_hash: str,
         metadata: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
-        record = {
-            "catalog_id": f"cat-{uuid.uuid4().hex[:10]}",
-            "stage_uri": stage_uri,
-            "build_type": build_type,
-            "artifact_path": str(artifact_path),
-            "cas_hash": cas_hash,
-            "registered_at": datetime.now(timezone.utc).isoformat(),
-            "metadata": metadata or {},
-        }
-        self._records.append(record)
-        return record
+        return self.backend.register_build(
+            stage_uri=stage_uri,
+            build_type=build_type,
+            artifact_path=artifact_path,
+            cas_hash=cas_hash,
+            metadata=metadata,
+        )
+
+    def get_build(self, catalog_id: str) -> Optional[Dict[str, Any]]:
+        return self.backend.get_build(catalog_id)
 
     def get_builds_for_stage(self, stage_uri: str) -> List[Dict[str, Any]]:
-        return [r for r in self._records if r["stage_uri"] == stage_uri]
+        return self.backend.get_builds_for_stage(stage_uri)
 
     def list_all_builds(self) -> List[Dict[str, Any]]:
-        return list(self._records)
+        return self.backend.list_all_builds()
 
     def save_catalog(self, path: Path) -> None:
-        p = Path(path)
-        p.parent.mkdir(parents=True, exist_ok=True)
-        p.write_text(json.dumps(self._records, indent=2), encoding="utf-8")
+        self.backend.save_catalog(path)
 
     def load_catalog(self, path: Path) -> None:
-        p = Path(path)
-        if p.is_file():
-            self._records = json.loads(p.read_text(encoding="utf-8"))
+        self.backend.load_catalog(path)
 
 
 class WorkerGridDispatcher:

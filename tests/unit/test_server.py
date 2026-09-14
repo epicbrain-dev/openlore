@@ -108,6 +108,14 @@ class TestOpenLoreAPIServer(unittest.TestCase):
         self.assertEqual(stop_res["status"], "STOPPED")
         self.assertEqual(stop_res["mode"], "stopped")
 
+    def test_narrative_assistant_endpoint(self) -> None:
+        payload = {"query": "Audit timeline for temporal paradoxes"}
+        res = self._post_json("/api/narrative/assistant", payload)
+        self.assertIn("query", res)
+        self.assertIn("answer", res)
+        self.assertIn("continuity_status", res)
+        self.assertIn(res["continuity_status"], ["CANON_VALID", "CONTRADICTION_DETECTED"])
+
     def test_not_found_endpoint(self) -> None:
         url = f"{self.base_url}/api/nonexistent_route"
         try:
