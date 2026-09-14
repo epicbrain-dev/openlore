@@ -42,10 +42,14 @@ class SHACLContinuityValidator:
         target_graph = Graph()
         if isinstance(data_graph, str):
             target_graph.parse(data=data_graph, format="turtle")
-        elif hasattr(data_graph, "contexts"):
+        elif hasattr(data_graph, "graphs") or hasattr(data_graph, "contexts"):
             # If a ConjunctiveGraph/Dataset is passed, extract the specific timeline or union
             if timeline_uri:
-                target_graph = data_graph.get_context(timeline_uri)
+                from rdflib import URIRef
+                if hasattr(data_graph, "graph"):
+                    target_graph = data_graph.graph(URIRef(timeline_uri))
+                else:
+                    target_graph = data_graph.get_context(timeline_uri)
             else:
                 for triple in data_graph.triples((None, None, None)):
                     target_graph.add(triple)

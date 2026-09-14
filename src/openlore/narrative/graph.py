@@ -39,7 +39,7 @@ class NarrativeGraphClient:
 
     def get_timeline_context(self, timeline_uri: str) -> Graph:
         """Get or create the specific named graph context for a timeline."""
-        context_graph = self.dataset.get_context(URIRef(timeline_uri))
+        context_graph = self.dataset.graph(URIRef(timeline_uri))
         self._bind_namespaces(context_graph)
         return context_graph
 
