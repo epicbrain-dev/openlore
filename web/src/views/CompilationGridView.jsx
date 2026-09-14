@@ -36,7 +36,7 @@ export default function CompilationGridView() {
     },
   ]);
 
-  const handleDispatch = () => {
+  const handleDispatch = async () => {
     setActiveWorkflow({
       id: `workflow-${Math.random().toString(16).slice(2, 10)}`,
       status: 'RUNNING',
@@ -50,6 +50,23 @@ export default function CompilationGridView() {
       ],
     });
 
+    try {
+      const targets = [];
+      if (selectedTargets.unreal) targets.push('unreal');
+      if (selectedTargets.unity) targets.push('unity');
+      if (selectedTargets.cinematic_cache) targets.push('cinematic-cache');
+      await fetch('/api/compile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          stage_uri: 'openlore://stages/hero_scene.usda',
+          targets: targets.length > 0 ? targets : ['unreal'],
+        }),
+      });
+    } catch (e) {
+      console.error('Compilation error:', e);
+    }
+
     setTimeout(() => {
       setActiveWorkflow((prev) => ({
         ...prev,
@@ -62,8 +79,8 @@ export default function CompilationGridView() {
         {
           id: newId,
           stage_uri: 'openlore://stages/hero_scene.usda',
-          build_type: 'game_package_unreal',
-          artifact_file: 'hero_scene_v2_unreal.pak',
+          build_type: selectedTargets.unreal ? 'game_package_unreal' : selectedTargets.unity ? 'game_package_unity' : 'cinematic_point_cache',
+          artifact_file: selectedTargets.unreal ? 'hero_scene_v2_unreal.pak' : selectedTargets.unity ? 'hero_scene_v2_unity.unitypackage' : 'hero_scene_v2_cache.usda',
           cas_hash: '8f434346648f6b96df89dda901c5176b10a6d83961dd3c1ac88b59b2dc327aa4',
           registered_at: new Date().toISOString().replace('T', ' ').slice(0, 19) + ' UTC',
         },
