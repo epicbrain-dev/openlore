@@ -137,18 +137,25 @@ export default function StageViewportView({ stages = [] }) {
                 </div>
               </div>
 
-              {activePrim.attributes.points && (
+              {activePrim.type === 'Mesh' ? (
                 <div className="grid grid-cols-2 gap-2 pt-1 border-t border-neutral-900">
                   <div>
                     <div className="text-[10px] text-neutral-500">Vertices (points)</div>
-                    <div className="text-emerald-400 font-bold">{activePrim.attributes.points.length}</div>
+                    <div className="text-emerald-400 font-bold">{activePrim.attributes.points?.length || 0}</div>
                   </div>
-                  {activePrim.attributes.faceVertexIndices && (
-                    <div>
-                      <div className="text-[10px] text-neutral-500">Face Indices</div>
-                      <div className="text-emerald-400 font-bold">{activePrim.attributes.faceVertexIndices.length}</div>
-                    </div>
-                  )}
+                  <div>
+                    <div className="text-[10px] text-neutral-500">Face Indices</div>
+                    <div className="text-emerald-400 font-bold">{activePrim.attributes.faceVertexIndices?.length || 0}</div>
+                  </div>
+                </div>
+              ) : (
+                <div className="pt-1 border-t border-neutral-900">
+                  <div className="text-[10px] text-neutral-500">Scenegraph Role</div>
+                  <div className="text-xs text-neutral-300 font-medium">
+                    {activePrim.type === 'Camera'
+                      ? 'Virtual CineCamera Prim (Live Link Stream Target)'
+                      : `Transform Grouping (${activePrim.children?.length || 0} sub-prims)`}
+                  </div>
                 </div>
               )}
 

@@ -92,61 +92,50 @@ export function parseUSDA(usdaText) {
 
     // Parse attributes inside current prim
     if (currentPrim) {
-      // points attribute
-      if (line.includes('point3f[] points') || line.includes('float3[] points')) {
-        let block = line;
-        while (!block.includes(']') && i + 1 < lines.length) {
-          i++;
-          block += ' ' + lines[i].trim();
+      const eqIdx = line.indexOf('=');
+      if (eqIdx !== -1) {
+        const attrDecl = line.slice(0, eqIdx).trim();
+        let valPart = line.slice(eqIdx + 1).trim();
+
+        // If array value, accumulate across lines until closing bracket ']'
+        if (valPart.startsWith('[') || valPart.includes('[')) {
+          while (!valPart.includes(']') && i + 1 < lines.length) {
+            i++;
+            valPart += ' ' + lines[i].trim();
+          }
         }
-        currentPrim.attributes.points = parseVector3List(block);
-      }
-      // faceVertexIndices
-      else if (line.includes('int[] faceVertexIndices')) {
-        let block = line;
-        while (!block.includes(']') && i + 1 < lines.length) {
-          i++;
-          block += ' ' + lines[i].trim();
+
+        // points attribute
+        if (attrDecl.includes('points')) {
+          currentPrim.attributes.points = parseVector3List(valPart);
         }
-        currentPrim.attributes.faceVertexIndices = parseIntList(block);
-      }
-      // faceVertexCounts
-      else if (line.includes('int[] faceVertexCounts')) {
-        let block = line;
-        while (!block.includes(']') && i + 1 < lines.length) {
-          i++;
-          block += ' ' + lines[i].trim();
+        // faceVertexIndices
+        else if (attrDecl.includes('faceVertexIndices')) {
+          currentPrim.attributes.faceVertexIndices = parseIntList(valPart);
         }
-        currentPrim.attributes.faceVertexCounts = parseIntList(block);
-      }
-      // displayColor
-      else if (line.includes('displayColor')) {
-        let block = line;
-        while (!block.includes(']') && i + 1 < lines.length) {
-          i++;
-          block += ' ' + lines[i].trim();
+        // faceVertexCounts
+        else if (attrDecl.includes('faceVertexCounts')) {
+          currentPrim.attributes.faceVertexCounts = parseIntList(valPart);
         }
-        const colors = parseVector3List(block);
-        if (colors.length > 0) {
-          currentPrim.attributes.displayColor = colors[0];
+        // displayColor
+        else if (attrDecl.includes('displayColor')) {
+          const colors = parseVector3List(valPart);
+          if (colors.length > 0) {
+            currentPrim.attributes.displayColor = colors[0];
+          }
         }
-      }
-      // extent
-      else if (line.includes('extent =')) {
-        let block = line;
-        while (!block.includes(']') && i + 1 < lines.length) {
-          i++;
-          block += ' ' + lines[i].trim();
+        // extent
+        else if (attrDecl.includes('extent')) {
+          currentPrim.attributes.extent = parseVector3List(valPart);
         }
-        currentPrim.attributes.extent = parseVector3List(block);
-      }
-      // translate / transform
-      else if (line.includes('xformOp:translate') || line.includes('double3 xformOp:translate')) {
-        const match = line.match(/\(([^)]+)\)/);
-        if (match) {
-          const parts = match[1].split(',').map(n => parseFloat(n.trim()));
-          if (parts.length >= 3) {
-            currentPrim.attributes.translate = parts;
+        // translate / transform
+        else if (attrDecl.includes('xformOp:translate')) {
+          const match = valPart.match(/\(([^)]+)\)/);
+          if (match) {
+            const parts = match[1].split(',').map(n => parseFloat(n.trim()));
+            if (parts.length >= 3) {
+              currentPrim.attributes.translate = parts;
+            }
           }
         }
       }
@@ -166,9 +155,8 @@ function parseVector3List(text) {
 }
 
 function parseIntList(text) {
-  const listMatch = text.match(/\[([^\]]*)\]/);
-  if (!listMatch) return [];
-  return listMatch[1]
+  return text
+    .replace(/\[|\]/g, ' ')
     .split(',')
     .map(s => parseInt(s.trim(), 10))
     .filter(n => !isNaN(n));
