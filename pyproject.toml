@@ -35,7 +35,7 @@ classifiers = [
 ]
 
 dependencies = [
-    "blake3>=0.4.1",
+    "blake3>=1.0.9",
     "pydantic>=2.8.0",
     "click>=8.1.7",
     "rich>=13.7.1",
