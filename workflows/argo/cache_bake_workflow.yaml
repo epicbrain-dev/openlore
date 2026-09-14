@@ -1,0 +1,46 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: openlore-cache-bake-
+spec:
+  entrypoint: bake-and-package
+  arguments:
+    parameters:
+      - name: stage-uri
+        value: "openlore://stages/hero_mech.usd"
+      - name: blake3-hash
+        value: "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+
+  templates:
+    - name: bake-and-package
+      steps:
+        - - name: bake-shot-cache
+            template: run-point-baker
+            arguments:
+              parameters:
+                - name: stage-uri
+                  value: "{{workflow.parameters.stage-uri}}"
+        - - name: package-unreal
+            template: run-unreal-compiler
+            arguments:
+              parameters:
+                - name: stage-uri
+                  value: "{{workflow.parameters.stage-uri}}"
+
+    - name: run-point-baker
+      inputs:
+        parameters:
+          - name: stage-uri
+      container:
+        image: openlore/worker-baker:latest
+        command: ["python", "-m", "openlore.compilation.shot_baker"]
+        args: ["--stage", "{{inputs.parameters.stage-uri}}"]
+
+    - name: run-unreal-compiler
+      inputs:
+        parameters:
+          - name: stage-uri
+      container:
+        image: openlore/worker-compiler:latest
+        command: ["python", "-m", "openlore.compilation.engine_package"]
+        args: ["--engine", "unreal", "--stage", "{{inputs.parameters.stage-uri}}"]

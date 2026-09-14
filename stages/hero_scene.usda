@@ -1,0 +1,26 @@
+#usda 1.0
+(
+    defaultPrim = "World"
+    metersPerUnit = 1
+    upAxis = "Y"
+)
+
+def Xform "World"
+{
+    def Mesh "HeroMech"
+    {
+        custom string openlore:assetHash = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        custom string openlore:licenseStatus = "approved"
+        custom string openlore:partnerId = "studio_vfx_london"
+        custom float openlore:royaltyPercentage = 18.5
+    }
+
+    def Mesh "LaserCannon"
+    {
+        custom string openlore:licenseStatus = "approved"
+        custom string openlore:partnerId = "studio_game_la"
+        custom string openlore:pointCacheHash = "a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f90"
+        custom float openlore:royaltyPercentage = 12
+    }
+}
+

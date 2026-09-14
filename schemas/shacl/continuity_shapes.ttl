@@ -1,0 +1,66 @@
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix canon: <https://openlore.io/ontology/canon#> .
+@prefix char: <https://openlore.io/ontology/characters#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+# 1. Narrative Entity Shape
+canon:NarrativeEntityShape a sh:NodeShape ;
+    sh:targetClass canon:NarrativeEntity ;
+    sh:property [
+        sh:path canon:hasTimeline ;
+        sh:minCount 1 ;
+        sh:message "Every narrative entity must belong to at least one valid Timeline." ;
+    ] ;
+    sh:property [
+        sh:path canon:name ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:string ;
+        sh:message "Narrative entities must have exactly one string name." ;
+    ] .
+
+# 2. Character Lifecycle Shape
+canon:CharacterShape a sh:NodeShape ;
+    sh:targetClass canon:Character ;
+    sh:property [
+        sh:path char:status ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:string ;
+        sh:message "Character must have a defined status (e.g., active, deceased, displaced)." ;
+    ] .
+
+# 3. Narrative Event Shape
+canon:NarrativeEventShape a sh:NodeShape ;
+    sh:targetClass canon:NarrativeEvent ;
+    sh:property [
+        sh:path canon:timestamp ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:dateTime ;
+        sh:message "Narrative events must have an exact xsd:dateTime timestamp." ;
+    ] ;
+    sh:property [
+        sh:path canon:hasParticipant ;
+        sh:minCount 1 ;
+        sh:message "Narrative events must have at least one participant character." ;
+    ] .
+
+# 4. Cryptographic Asset Binding Shape
+canon:AssetBindingShape a sh:NodeShape ;
+    sh:targetClass canon:AssetBinding ;
+    sh:property [
+        sh:path canon:hasBlake3Hash ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:string ;
+        sh:pattern "^[a-f0-9]{64}$" ;
+        sh:message "Asset binding must have a valid 64-character hexadecimal BLAKE3 hash." ;
+    ] ;
+    sh:property [
+        sh:path canon:primPath ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:datatype xsd:string ;
+        sh:message "Asset binding must specify the target OpenUSD Prim path." ;
+    ] .

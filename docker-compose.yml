@@ -1,0 +1,66 @@
+version: '3.8'
+
+services:
+  # 1. Apache Kafka / Redpanda Streaming Engine
+  kafka:
+    image: vectorized/redpanda:v23.3.11
+    container_name: openlore-kafka
+    ports:
+      - "9092:9092"
+      - "9644:9644"
+    command:
+      - redpanda start
+      - --smp 1
+      - --memory 1G
+      - --reserve-memory 0M
+      - --overprovisioned
+      - --node-id 0
+      - --check=false
+      - --kafka-addr PLAINTEXT://0.0.0.0:29092,OUTSIDE://0.0.0.0:9092
+      - --advertise-kafka-addr PLAINTEXT://kafka:29092,OUTSIDE://localhost:9092
+
+  # 2. Open Policy Agent (OPA) for Provenance & Royalty Calculation
+  opa:
+    image: openpolicyagent/opa:0.65.0
+    container_name: openlore-opa
+    ports:
+      - "8181:8181"
+    command:
+      - "run"
+      - "--server"
+      - "--addr=0.0.0.0:8181"
+      - "/policies"
+    volumes:
+      - ./schemas/opa:/policies
+
+  # 3. W3C RDF Triplestore (Apache Jena Fuseki) for Lore & Canon
+  triplestore:
+    image: secoresearch/fuseki:5.0.0
+    container_name: openlore-triplestore
+    ports:
+      - "3030:3030"
+    environment:
+      - ADMIN_PASSWORD=admin
+    volumes:
+      - ./schemas/ontology:/fuseki/databases
+
+  # 4. Temporal Workflow Orchestration Server
+  temporal:
+    image: temporalio/auto-setup:1.24.1
+    container_name: openlore-temporal
+    ports:
+      - "7233:7233"
+    environment:
+      - DB=sqlite
+      - DYNAMIC_CONFIG_FILE_PATH=config/dynamicconfig/development-sql.yaml
+
+  # 5. Temporal Web UI
+  temporal-ui:
+    image: temporalio/ui:2.26.1
+    container_name: openlore-temporal-ui
+    ports:
+      - "8080:8080"
+    environment:
+      - TEMPORAL_ADDRESS=temporal:7233
+    depends_on:
+      - temporal

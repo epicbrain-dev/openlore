@@ -1,0 +1,46 @@
+@prefix : <https://openlore.io/ontology/canon#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<https://openlore.io/ontology/canon> a owl:Ontology ;
+    rdfs:label "OpenLore Canon & Timeline Ontology" ;
+    rdfs:comment "Ontology for modeling narrative continuity, timelines, and asset bindings across transmedia IPs." .
+
+:Timeline a owl:Class ;
+    rdfs:label "Timeline" ;
+    rdfs:comment "A distinct narrative continuity or multiverse branch." .
+
+:PrimeCanon a owl:Class ;
+    rdfs:subClassOf :Timeline ;
+    rdfs:label "Prime Canon" ;
+    rdfs:comment "The definitive root continuity." .
+
+:AlternateContinuity a owl:Class ;
+    rdfs:subClassOf :Timeline ;
+    rdfs:label "Alternate Continuity" ;
+    rdfs:comment "A derivative branch or multiverse spin-off." .
+
+:NarrativeEntity a owl:Class ;
+    rdfs:label "Narrative Entity" .
+
+:Character a owl:Class ;
+    rdfs:subClassOf :NarrativeEntity ;
+    rdfs:label "Character" .
+
+:AssetBinding a owl:Class ;
+    rdfs:label "Asset Binding" ;
+    rdfs:comment "Links a narrative prim to an immutable content-addressed USD stage or mesh." .
+
+:hasTimeline a owl:ObjectProperty ;
+    rdfs:domain :NarrativeEntity ;
+    rdfs:range :Timeline .
+
+:boundAsset a owl:ObjectProperty ;
+    rdfs:domain :NarrativeEntity ;
+    rdfs:range :AssetBinding .
+
+:hasBlake3Hash a owl:DatatypeProperty ;
+    rdfs:domain :AssetBinding ;
+    rdfs:range xsd:string .
