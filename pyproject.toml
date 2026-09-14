@@ -54,7 +54,9 @@ dev = [
     "pytest-asyncio>=0.23.0",
     "pytest-cov>=5.0.0",
     "ruff>=0.5.0",
-    "mypy>=1.10.0"
+    "mypy>=1.10.0",
+    "usd-core>=23.11",
+    "materialx>=1.38.10"
 ]
 usd = [
     "usd-core>=23.11",
