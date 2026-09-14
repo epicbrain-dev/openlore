@@ -110,6 +110,18 @@ def create_parser() -> argparse.ArgumentParser:
     export_plugin_cmd.add_argument("--output-dir", default="./plugins/OpenLoreLiveLink", help="Output directory for UE5 plugin")
     export_plugin_cmd.add_argument("--name", default="OpenLoreLiveLink", help="Plugin name")
 
+    # auth
+    auth_cmd = subparsers.add_parser("auth", help="Enterprise token generation and access control")
+    auth_cmd.add_argument("action", choices=["create-token"], default="create-token", nargs="?", help="Auth action")
+    auth_cmd.add_argument("--sub", default="admin_user", help="Username / Subject identifier")
+    auth_cmd.add_argument("--role", choices=["admin", "supervisor", "td", "artist", "partner", "viewer"], default="artist", help="RBAC Role")
+    auth_cmd.add_argument("--days", type=int, default=30, help="Token validity duration in days")
+
+    # dcc
+    dcc_cmd = subparsers.add_parser("dcc", help="Export native DCC sidecar connectors (Blender, Maya)")
+    dcc_cmd.add_argument("target", choices=["blender", "maya", "all"], default="all", nargs="?", help="Target DCC application")
+    dcc_cmd.add_argument("--output-dir", default="./dcc", help="Base output directory")
+
     return parser
 
 
@@ -439,6 +451,37 @@ def main(args: Sequence[str] | None = None) -> int:
         else:
             parser.parse_args(["livelink", "--help"])
             return 0
+
+    if parsed_args.command == "auth":
+        from openlore.server.auth import Role, TokenService
+
+        role = Role(parsed_args.role)
+        seconds = parsed_args.days * 86400
+        token = TokenService.create_token(sub=parsed_args.sub, role=role, expires_in_seconds=seconds)
+        print(f"[OpenLore Auth] Generated Bearer Token for '{parsed_args.sub}' (Role: {role.value}):")
+        print(f"  Token: {token}")
+        print(f"  Expires in: {parsed_args.days} days")
+        print(f"  Header usage: Authorization: Bearer {token}")
+        return 0
+
+    if parsed_args.command == "dcc":
+        from openlore.dcc.blender import BlenderAddonScaffolder
+        from openlore.dcc.export import DCCExporter
+        from openlore.dcc.maya import MayaBridgeScaffolder
+
+        out_dir = Path(parsed_args.output_dir)
+        target = parsed_args.target
+
+        if target in ("blender", "all"):
+            b_file = BlenderAddonScaffolder.export(out_dir / "blender")
+            print(f"[OpenLore DCC] Exported Blender 4.x Add-on to: {b_file}")
+
+        if target in ("maya", "all"):
+            m_file = MayaBridgeScaffolder.export(out_dir / "maya")
+            print(f"[OpenLore DCC] Exported Autodesk Maya Bridge to: {m_file}")
+
+        print(f"[OpenLore DCC] DCC sidecar exports complete in '{out_dir}'.")
+        return 0
 
     print(f"[OpenLore] Command '{parsed_args.command}' execution stub.")
     return 0

@@ -1,0 +1,46 @@
+replicaCount: 3
+
+image:
+  repository: openlore/openlore-api
+  pullPolicy: IfNotPresent
+  tag: "1.0.0"
+
+service:
+  type: ClusterIP
+  port: 8000
+  udpBroadcastPort: 11111
+  udpReceivePort: 11112
+
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    nginx.ingress.kubernetes.io/websocket-services: "openlore-service"
+  hosts:
+    - host: openlore.studio.internal
+      paths:
+        - path: /
+          pathType: Prefix
+
+resources:
+  limits:
+    cpu: 2000m
+    memory: 4Gi
+  requests:
+    cpu: 500m
+    memory: 1Gi
+
+persistence:
+  cas:
+    enabled: true
+    size: 500Gi
+    storageClass: "standard"
+
+env:
+  authEnabled: "true"
+  kafkaServers: "openlore-kafka:9092"
+  opaUrl: "http://openlore-opa:8181/v1/data/openlore/royalties"
+  triplestoreUrl: "http://openlore-fuseki:3030/openlore"
+  temporalUrl: "openlore-temporal:7233"

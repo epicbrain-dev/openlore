@@ -1,13 +1,15 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 
 export default function ThreeViewport({ rigMode = 'cinematic_cache', onPrimSelect, selectedPrim }) {
   const containerRef = useRef(null);
   const sceneRef = useRef(null);
+  const cameraRef = useRef(null);
   const heroMeshRef = useRef(null);
   const capsuleRef = useRef(null);
   const skeletonRef = useRef(null);
   const reqIdRef = useRef(null);
+  const [wsConnected, setWsConnected] = useState(false);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -23,6 +25,7 @@ export default function ThreeViewport({ rigMode = 'cinematic_cache', onPrimSelec
     const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
     camera.position.set(4, 3, 6);
     camera.lookAt(0, 1, 0);
+    cameraRef.current = camera;
 
     // 2. Renderer
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -217,6 +220,54 @@ export default function ThreeViewport({ rigMode = 'cinematic_cache', onPrimSelec
     }
   }, [rigMode]);
 
+  // Real-Time RFC 6455 WebSocket Telemetry Hook
+  useEffect(() => {
+    const isHttps = window.location.protocol === 'https:';
+    const wsProto = isHttps ? 'wss:' : 'ws:';
+    const wsUrl = `${wsProto}//${window.location.host}/ws/live`;
+    let ws = null;
+
+    try {
+      ws = new WebSocket(wsUrl);
+      ws.onopen = () => {
+        setWsConnected(true);
+      };
+      ws.onclose = () => {
+        setWsConnected(false);
+      };
+      ws.onmessage = (event) => {
+        try {
+          const msg = JSON.parse(event.data);
+          if (msg.type === 'STAGE_MUTATION') {
+            if ((msg.prim_path === '/World/Camera' || msg.prim_path === '/World/CineCamera') && cameraRef.current) {
+              const val = msg.value;
+              if (Array.isArray(val) && val.length >= 3) {
+                // Smoothly lerp camera position from OpenLore CRDT edit
+                cameraRef.current.position.x = val[0] * 0.1;
+                cameraRef.current.position.y = Math.max(0.5, val[1] * 0.1);
+                cameraRef.current.position.z = val[2] * 0.1 + 4.0;
+                cameraRef.current.lookAt(0, 1.1, 0);
+              }
+            } else if (msg.prim_path === '/World/Hero' && heroMeshRef.current) {
+              const val = msg.value;
+              if (Array.isArray(val) && val.length >= 3) {
+                heroMeshRef.current.position.set(val[0], val[1], val[2]);
+              }
+            }
+          }
+        } catch (e) {
+          // ignore parsing error
+        }
+      };
+    } catch (err) {
+      setWsConnected(false);
+    }
+
+    return () => {
+      if (ws) ws.close();
+    };
+  }, []);
+
   return (
     <div className="relative w-full h-full min-h-[440px] bg-neutral-950 rounded-xl overflow-hidden border border-neutral-800">
       <div ref={containerRef} className="w-full h-full cursor-grab active:cursor-grabbing" />
@@ -224,9 +275,14 @@ export default function ThreeViewport({ rigMode = 'cinematic_cache', onPrimSelec
       {/* 3D Viewport HUD Overlay */}
       <div className="absolute top-4 left-4 flex flex-col gap-2 pointer-events-none">
         <div className="flex items-center gap-2 bg-neutral-900/80 backdrop-blur-md px-3 py-1.5 rounded-lg border border-neutral-700/60 shadow-lg">
-          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span className={`w-2 h-2 rounded-full ${wsConnected ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`}></span>
           <span className="text-xs font-mono font-medium text-neutral-200">OpenUSD Live Viewport</span>
           <span className="text-[10px] bg-neutral-800 text-neutral-400 px-1.5 py-0.5 rounded font-mono">60 FPS</span>
+          <span className={`text-[10px] px-1.5 py-0.5 rounded font-mono ${
+            wsConnected ? 'bg-emerald-950/80 border border-emerald-700 text-emerald-300' : 'bg-neutral-800 text-neutral-400'
+          }`}>
+            {wsConnected ? '⚡ WS LIVE' : 'WS OFFLINE'}
+          </span>
         </div>
         <div className="bg-neutral-900/80 backdrop-blur-md px-3 py-2 rounded-lg border border-neutral-700/60 text-[11px] font-mono text-neutral-400 flex flex-col gap-1">
           <div>Stage: <span className="text-indigo-300">openlore://stages/hero_scene.usda</span></div>

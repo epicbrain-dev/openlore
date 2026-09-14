@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-service
+  labels:
+    app.kubernetes.io/name: openlore
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: 8000
+      protocol: TCP
+      name: http-ws
+    - port: {{ .Values.service.udpBroadcastPort }}
+      targetPort: 11111
+      protocol: UDP
+      name: livelink-tx
+    - port: {{ .Values.service.udpReceivePort }}
+      targetPort: 11112
+      protocol: UDP
+      name: livelink-rx
+  selector:
+    app.kubernetes.io/name: openlore
+    app.kubernetes.io/instance: {{ .Release.Name }}

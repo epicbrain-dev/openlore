@@ -25,6 +25,17 @@ from openlore.partner.linter import PreFlightUSDValidator
 from openlore.partner.promotion import StagePromotionGate
 from openlore.provenance.accounting import RoyaltyAccountingEngine
 from openlore.provenance.harvester import StageDAGHarvester
+from openlore.server.auth import Permission, Role, TokenService, authenticate_request
+from openlore.server.websocket import (
+    OPCODE_CLOSE,
+    OPCODE_PING,
+    OPCODE_TEXT,
+    WebSocketClient,
+    compute_accept_key,
+    decode_client_frame,
+    encode_frame,
+    ws_manager,
+)
 
 
 class OpenLoreAPIHandler(BaseHTTPRequestHandler):
@@ -74,6 +85,69 @@ class OpenLoreAPIHandler(BaseHTTPRequestHandler):
     def do_GET(self) -> None:
         parsed_url = urllib.parse.urlparse(self.path)
         path = parsed_url.path
+        query_dict = urllib.parse.parse_qs(parsed_url.query)
+
+        # 0. WebSocket Upgrade Route (/ws/live)
+        if path == "/ws/live" and self.headers.get("Upgrade", "").lower() == "websocket":
+            sec_key = self.headers.get("Sec-WebSocket-Key", "")
+            if not sec_key:
+                self._send_error("Missing Sec-WebSocket-Key header", HTTPStatus.BAD_REQUEST)
+                return
+
+            auth_ok, token, auth_err = authenticate_request(dict(self.headers), query_dict)
+            if not auth_ok:
+                self._send_error(auth_err or "Unauthorized WebSocket connection", HTTPStatus.UNAUTHORIZED)
+                return
+
+            accept_key = compute_accept_key(sec_key)
+            self.send_response(HTTPStatus.SWITCHING_PROTOCOLS)
+            self.send_header("Upgrade", "websocket")
+            self.send_header("Connection", "Upgrade")
+            self.send_header("Sec-WebSocket-Accept", accept_key)
+            self.end_headers()
+
+            client = WebSocketClient(self.connection, self.client_address)
+            ws_manager.register(client)
+            client.send_json({
+                "type": "CONNECTED",
+                "user": token.sub if token else "anonymous",
+                "role": token.role.value if token else "admin",
+                "system": "OpenLore Real-Time Telemetry Gateway",
+            })
+
+            try:
+                while client.is_open:
+                    try:
+                        raw = self.connection.recv(4096)
+                    except (socket.timeout, OSError):
+                        break
+                    if not raw:
+                        break
+                    opcode, payload, consumed = decode_client_frame(raw)
+                    if opcode == OPCODE_CLOSE:
+                        break
+                    elif opcode == OPCODE_PING:
+                        client.sock.sendall(encode_frame(payload, opcode=0xA))
+                    elif opcode == OPCODE_TEXT:
+                        try:
+                            msg = json.loads(payload.decode("utf-8"))
+                            if msg.get("type") == "PING":
+                                client.send_json({"type": "PONG"})
+                            elif msg.get("type") == "TELEMETRY":
+                                # Relay client telemetry to other viewers
+                                ws_manager.broadcast_json(msg)
+                        except Exception:
+                            pass
+            finally:
+                ws_manager.unregister(client)
+            return
+
+        # Security Authentication Check for protected REST API routes
+        if path.startswith("/api/"):
+            auth_ok, token, auth_err = authenticate_request(dict(self.headers), query_dict)
+            if not auth_ok:
+                self._send_error(auth_err or "Unauthorized", HTTPStatus.UNAUTHORIZED)
+                return
 
         # 1. System Status
         if path == "/api/status":
@@ -251,7 +325,16 @@ class OpenLoreAPIHandler(BaseHTTPRequestHandler):
         self._send_error("Endpoint not found", HTTPStatus.NOT_FOUND)
 
     def do_POST(self) -> None:
-        path = urllib.parse.urlparse(self.path).path
+        parsed_url = urllib.parse.urlparse(self.path)
+        path = parsed_url.path
+        query_dict = urllib.parse.parse_qs(parsed_url.query)
+
+        # Security Authentication Check for protected REST API routes
+        auth_ok, token, auth_err = authenticate_request(dict(self.headers), query_dict)
+        if not auth_ok:
+            self._send_error(auth_err or "Unauthorized", HTTPStatus.UNAUTHORIZED)
+            return
+
         body = self._read_body_json()
 
         # 1. Branch Narrative Timeline
@@ -269,15 +352,22 @@ class OpenLoreAPIHandler(BaseHTTPRequestHandler):
             graph_path.parent.mkdir(parents=True, exist_ok=True)
             client.save_to_file(graph_path)
 
+            ws_manager.broadcast_json({
+                "type": "TIMELINE_BRANCHED",
+                "timeline_uri": branch.uri,
+                "name": branch.name,
+                "source": source,
+            })
+
             self._send_json({
                 "status": "SUCCESS",
                 "branch_uri": branch.uri,
                 "name": branch.name,
-                "parent": branch.parent_timeline_uri,
+                "source_timeline": source,
             })
             return
 
-        # 2. Toggle Daemon Connectivity
+        # 2. Toggle Daemon Online State (Offline Shadow Buffer Simulation)
         elif path == "/api/daemon/toggle":
             if not self.shared_daemon:
                 stream = KafkaEventStream("openlore.stage.web", use_memory_bus=True)
@@ -303,6 +393,16 @@ class OpenLoreAPIHandler(BaseHTTPRequestHandler):
             val = body.get("value", [10.0, 5.0, 2.0])
 
             self.shared_daemon.record_local_edit(prim_path, attr_name, val)
+
+            # Broadcast live edit via WebSocket to all connected 3D viewports
+            ws_manager.broadcast_json({
+                "type": "STAGE_MUTATION",
+                "prim_path": prim_path,
+                "attribute_name": attr_name,
+                "value": val,
+                "studio_id": self.shared_daemon.studio_id,
+            })
+
             self._send_json({
                 "status": "SUCCESS",
                 "prim_path": prim_path,

@@ -8,7 +8,7 @@ The OpenLore software architecture provides a unified cross-media digital asset 
 
 ## Architecture Overview
 
-OpenLore is divided into 11 modular core domains:
+OpenLore is divided into 12 modular core domains:
 
 ```
 src/openlore/
@@ -20,7 +20,8 @@ src/openlore/
 ├── partner/         # Outbound geometric decimation/clay proxying, quarantined pre-flight linter, TD promotion gates, eBPF zero-egress
 ├── compilation/     # Temporal workflow dispatcher, Kubernetes Argo DAG generator, Unreal/Unity compilers, Shot point cache baker
 ├── bridge/          # Unreal Engine 5 Live Link Bridge, UDP streaming, C++ plugin scaffold
-├── server/          # Zero-dependency Python REST API & SPA static hosting for studio dashboards
+├── dcc/             # Native sidecar connectors for Blender 4.x and Autodesk Maya 2024/2025
+├── server/          # Zero-dependency Python REST API, RFC 6455 WebSocket gateway, RBAC auth, and static SPA hosting
 ├── cli/             # Unified production command-line interface
 └── exceptions.py    # Standardized domain error taxonomy
 ```
@@ -239,7 +240,24 @@ Generates ready-to-build C++ Unreal Engine 5 Plugin projects:
 
 ---
 
-## 10. CLI Command Summary
+## 10. `openlore.dcc`
+
+### `BlenderAddonScaffolder`
+Turnkey Blender 4.x Python add-on generator:
+- `get_addon_source() -> str`: Returns full add-on code with modal event timer streaming active camera transform to OpenLore Live Link UDP.
+- `export(output_dir: Path) -> Path`: Writes `openlore_blender_addon.py`.
+
+### `MayaBridgeScaffolder`
+Autodesk Maya 2024/2025 Python telemetry bridge:
+- `get_bridge_source() -> str`: Returns Maya tool window code with `cmds.scriptJob` hooks streaming viewport camera telemetry.
+- `export(output_dir: Path) -> Path`: Writes `openlore_maya_bridge.py`.
+
+### `DCCExporter`
+- `export_all(base_output_dir: Path) -> Dict[str, Path]`: Exports both Blender and Maya connectors simultaneously.
+
+---
+
+## 11. CLI Command Summary
 
 | Command | Subcommand / Options | Description |
 |---|---|---|
@@ -251,6 +269,9 @@ Generates ready-to-build C++ Unreal Engine 5 Plugin projects:
 | `openlore compile`| `--stage`, `--stage-path`, `--target` | Dispatch worker grid compilation (Unreal, Unity, Shot baker). |
 | `openlore catalog`| `list` | Inspect Central Production Catalog builds. |
 | `openlore export` | `--stage`, `--target` | Introspect DAG, evaluate OPA royalties, and trigger builds. |
-| `openlore web` | `--host`, `--port`, `--static-dir` | Launch REST API server & serve React Studio Cockpit dashboard. |
+| `openlore web` | `--host`, `--port`, `--static-dir` | Launch REST API server, WebSocket gateway & React Studio Cockpit. |
 | `openlore livelink`| `stream`, `export-plugin` | Run real-time UE5 Live Link bridge or export turnkey C++ plugin. |
+| `openlore auth` | `create-token` | Generate HMAC-SHA256 bearer tokens with RBAC roles. |
+| `openlore dcc` | `blender`, `maya`, `all` | Export native sidecars for Blender 4.x and Autodesk Maya. |
+
 
