@@ -19,6 +19,12 @@
   <a href="#tests"><img src="https://img.shields.io/badge/Tests-101%20Passing-brightgreen.svg" alt="101 Tests Passing" /></a>
 </p>
 
+<p align="center">
+  <a href="docs/MANUAL.md"><strong>📖 Comprehensive Instruction Manual</strong></a> &bull;
+  <a href="docs/API_REFERENCE.md"><strong>📚 API Reference</strong></a> &bull;
+  <a href="docs/DEPLOYMENT_RUNBOOK.md"><strong>🚀 Deployment Runbook</strong></a>
+</p>
+
 ---
 
 ## Overview
@@ -314,6 +320,7 @@ openlore/
 │   ├── Dockerfile.server
 │   └── Dockerfile.worker
 ├── docs/                         # Detailed architecture documentation
+│   ├── MANUAL.md                 # Exhaustive instruction and operator manual
 │   ├── API_REFERENCE.md          # Complete Python and REST API reference
 │   └── DEPLOYMENT_RUNBOOK.md     # Production deployment and operational runbook
 ├── helm/                         # Kubernetes Helm charts
