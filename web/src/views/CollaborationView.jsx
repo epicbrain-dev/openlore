@@ -20,13 +20,20 @@ export default function CollaborationView() {
     { id: 3, studio: 'studio_tokyo', attr: '/World/Environment/Lighting.inputs:intensity', val: '2500.0', status: 'CONVERGED' },
   ]);
 
-  const handleToggleOnline = () => {
-    if (isOnline) {
-      // Disconnecting
-      setIsOnline(false);
-    } else {
+  const handleToggleOnline = async () => {
+    const nextOnline = !isOnline;
+    setIsOnline(nextOnline);
+    try {
+      await fetch('/api/daemon/sever', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sever: !nextOnline }),
+      });
+    } catch (e) {
+      console.error('Sever daemon error:', e);
+    }
+    if (!isOnline) {
       // Reconnecting -> flush shadow buffer!
-      setIsOnline(true);
       if (shadowBufferedCount > 0) {
         setVectorClocks((prev) => ({ ...prev, studio_london: prev.studio_london + shadowBufferedCount }));
         setShadowBufferedCount(0);
@@ -34,7 +41,21 @@ export default function CollaborationView() {
     }
   };
 
-  const handleBroadcastEdit = () => {
+  const handleBroadcastEdit = async () => {
+    try {
+      await fetch('/api/daemon/edit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prim_path: '/World/Camera',
+          attribute_name: 'xformOp:translate',
+          value: [camX, camY, camZ],
+        }),
+      });
+    } catch (e) {
+      console.error('Broadcast edit error:', e);
+    }
+
     if (!isOnline) {
       setShadowBufferedCount((prev) => prev + 1);
     } else {
@@ -176,7 +197,7 @@ export default function CollaborationView() {
               className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-semibold flex items-center justify-center gap-2 shadow transition-all cursor-pointer"
             >
               <Send className="w-4 h-4" />
-              {isOnline ? 'Broadcast Transform over Kafka' : 'Buffer Edit in Shadow Storage'}
+              {isOnline ? 'Record Collaborative Edit (Broadcast over Kafka)' : 'Record Collaborative Edit (Buffer in Shadow Storage)'}
             </button>
           </div>
         </div>
