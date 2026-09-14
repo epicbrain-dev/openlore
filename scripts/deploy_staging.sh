@@ -25,10 +25,11 @@ echo "🔄 Spinning up staging microservices..."
 docker compose -f "${COMPOSE_FILE}" up -d --build
 
 echo "⏳ Waiting for health check on http://localhost:8080/api/status..."
+TOKEN=$(python3 -m openlore.cli.main auth create-token --sub staging-healthcheck --role admin 2>/dev/null | grep "Token:" | awk '{print $2}')
 MAX_TRIES=20
 COUNT=0
 while [ $COUNT -lt $MAX_TRIES ]; do
-    if curl -s -f http://localhost:8080/api/status > /dev/null 2>&1; then
+    if curl -s -f -H "Authorization: Bearer ${TOKEN}" http://localhost:8080/api/status > /dev/null 2>&1; then
         echo "✅ OpenLore Staging is healthy and responsive on port 8080!"
         break
     fi

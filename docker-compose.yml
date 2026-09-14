@@ -1,9 +1,7 @@
-version: '3.8'
-
 services:
   # 1. Apache Kafka / Redpanda Streaming Engine
   kafka:
-    image: vectorized/redpanda:v23.3.11
+    image: redpandadata/redpanda:v23.3.11
     container_name: openlore-kafka
     ports:
       - "9092:9092"

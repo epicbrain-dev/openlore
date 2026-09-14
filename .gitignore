@@ -72,6 +72,7 @@ cover/
 /data/stages/
 /data/builds/
 /data/quarantine/
+/data/openlore/
 !/data/lore/
 /cas_storage/
 

@@ -5,7 +5,7 @@
 # ==============================================================================
 
 # --- Stage 1: Frontend Build ---
-FROM node:26-alpine AS frontend-builder
+FROM node:22-alpine AS frontend-builder
 WORKDIR /build/web
 
 COPY web/package*.json ./
@@ -15,7 +15,7 @@ COPY web/ ./
 RUN npm run build
 
 # --- Stage 2: Production Python Runtime ---
-FROM python:3.14-slim AS runtime
+FROM python:3.12-slim AS runtime
 
 LABEL maintainer="OpenLore Engineering <engineering@openlore.io>"
 LABEL description="OpenLore: Git for 3D worlds, game lore, and Hollywood pipelines."
