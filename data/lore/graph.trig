@@ -1,0 +1,139 @@
+@prefix canon: <https://openlore.io/ontology/canon#> .
+@prefix char: <https://openlore.io/ontology/characters#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix timeline: <https://openlore.io/timelines/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+timeline:prime-canon {
+    <https://openlore.io/events/BattleOfNova> a canon:NarrativeEvent ;
+        canon:hasParticipant <https://openlore.io/characters/ElaraVance>,
+            <https://openlore.io/characters/HeroCommander> ;
+        canon:hasTimeline timeline:prime-canon ;
+        canon:location "Terra Prime Orbit"^^xsd:string ;
+        canon:name "Battle of Nova"^^xsd:string ;
+        canon:timestamp "2150-06-15T12:00:00+00:00"^^xsd:dateTime .
+
+    <https://openlore.io/events/QuantumRift> a canon:NarrativeEvent ;
+        canon:hasParticipant <https://openlore.io/characters/HeroCommander> ;
+        canon:hasTimeline timeline:prime-canon ;
+        canon:location "Sector 7 Wormhole"^^xsd:string ;
+        canon:name "Quantum Rift Divergence"^^xsd:string ;
+        canon:timestamp "2155-08-20T18:30:00+00:00"^^xsd:dateTime .
+
+    <https://openlore.io/characters/ElaraVance> a canon:Character,
+            canon:NarrativeEntity ;
+        rdfs:label "Elara Vance"^^xsd:string ;
+        canon:boundAsset <https://openlore.io/characters/ElaraVance/binding> ;
+        canon:hasTimeline timeline:prime-canon ;
+        canon:name "Elara Vance"^^xsd:string ;
+        char:birthTime "2145-05-12T00:00:00+00:00"^^xsd:dateTime ;
+        char:status "Active"^^xsd:string .
+
+    <https://openlore.io/characters/ElaraVance/binding> a canon:AssetBinding ;
+        canon:hasBlake3Hash "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"^^xsd:string ;
+        canon:hasTimeline timeline:prime-canon ;
+        canon:primPath "/World/Characters/Pauldrons"^^xsd:string .
+
+    <https://openlore.io/characters/HeroCommander/binding> a canon:AssetBinding ;
+        canon:hasBlake3Hash "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"^^xsd:string ;
+        canon:hasTimeline timeline:prime-canon ;
+        canon:primPath "/World/Characters/HeroArmor"^^xsd:string .
+
+    <https://openlore.io/characters/HeroCommander> a canon:Character,
+            canon:NarrativeEntity ;
+        rdfs:label "Hero Commander"^^xsd:string ;
+        canon:boundAsset <https://openlore.io/characters/HeroCommander/binding> ;
+        canon:hasTimeline timeline:prime-canon ;
+        canon:name "Hero Commander"^^xsd:string ;
+        char:birthTime "2140-01-01T00:00:00+00:00"^^xsd:dateTime ;
+        char:status "Active"^^xsd:string .
+
+    timeline:prime-canon a canon:PrimeCanon,
+            canon:Timeline ;
+        rdfs:label "Prime Canon Timeline"^^xsd:string ;
+        canon:createdAt "2026-09-14T14:28:03.490136+00:00"^^xsd:dateTime .
+}
+
+timeline:quantum_spin_off_01 {
+    timeline:quantum_spin_off_01 a canon:AlternateContinuity,
+            canon:Timeline ;
+        rdfs:label "Quantum Spin-Off Reality"^^xsd:string ;
+        canon:createdAt "2026-09-14T14:28:03.492758+00:00"^^xsd:dateTime ;
+        canon:divergesFrom timeline:prime-canon .
+}
+
+timeline:api_test_branch_01 {
+    timeline:api_test_branch_01 a canon:AlternateContinuity,
+            canon:Timeline ;
+        rdfs:label "API Test Branched Timeline"^^xsd:string ;
+        canon:createdAt "2026-09-14T15:31:31.022151+00:00"^^xsd:dateTime ;
+        canon:divergesFrom timeline:prime-canon .
+
+    <https://openlore.io/events/BattleOfNova> a canon:NarrativeEvent ;
+        canon:hasParticipant <https://openlore.io/characters/ElaraVance>,
+            <https://openlore.io/characters/HeroCommander> ;
+        canon:hasTimeline timeline:prime-canon ;
+        canon:location "Terra Prime Orbit"^^xsd:string ;
+        canon:name "Battle of Nova"^^xsd:string ;
+        canon:timestamp "2150-06-15T12:00:00+00:00"^^xsd:dateTime .
+
+    <https://openlore.io/events/QuantumRift> a canon:NarrativeEvent ;
+        canon:hasParticipant <https://openlore.io/characters/HeroCommander> ;
+        canon:hasTimeline timeline:prime-canon ;
+        canon:location "Sector 7 Wormhole"^^xsd:string ;
+        canon:name "Quantum Rift Divergence"^^xsd:string ;
+        canon:timestamp "2155-08-20T18:30:00+00:00"^^xsd:dateTime .
+
+    <https://openlore.io/characters/ElaraVance> a canon:Character,
+            canon:NarrativeEntity ;
+        rdfs:label "Elara Vance"^^xsd:string ;
+        canon:boundAsset <https://openlore.io/characters/ElaraVance/binding> ;
+        canon:hasTimeline timeline:prime-canon ;
+        canon:name "Elara Vance"^^xsd:string ;
+        char:birthTime "2145-05-12T00:00:00+00:00"^^xsd:dateTime ;
+        char:status "Active"^^xsd:string .
+
+    <https://openlore.io/characters/ElaraVance/binding> a canon:AssetBinding ;
+        canon:hasBlake3Hash "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"^^xsd:string ;
+        canon:hasTimeline timeline:prime-canon ;
+        canon:primPath "/World/Characters/Pauldrons"^^xsd:string .
+
+    <https://openlore.io/characters/HeroCommander/binding> a canon:AssetBinding ;
+        canon:hasBlake3Hash "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"^^xsd:string ;
+        canon:hasTimeline timeline:prime-canon ;
+        canon:primPath "/World/Characters/HeroArmor"^^xsd:string .
+
+    <https://openlore.io/characters/HeroCommander> a canon:Character,
+            canon:NarrativeEntity ;
+        rdfs:label "Hero Commander"^^xsd:string ;
+        canon:boundAsset <https://openlore.io/characters/HeroCommander/binding> ;
+        canon:hasTimeline timeline:prime-canon ;
+        canon:name "Hero Commander"^^xsd:string ;
+        char:birthTime "2140-01-01T00:00:00+00:00"^^xsd:dateTime ;
+        char:status "Active"^^xsd:string .
+
+    timeline:prime-canon a canon:PrimeCanon,
+            canon:Timeline ;
+        rdfs:label "Prime Canon Timeline"^^xsd:string ;
+        canon:createdAt "2026-09-14T14:28:03.490136+00:00"^^xsd:dateTime .
+}
+
+{
+    timeline:api_test_branch_01 a canon:AlternateContinuity,
+            canon:Timeline ;
+        rdfs:label "API Test Branched Timeline"^^xsd:string ;
+        canon:createdAt "2026-09-14T15:31:31.022151+00:00"^^xsd:dateTime ;
+        canon:divergesFrom timeline:prime-canon .
+
+    timeline:quantum_spin_off_01 a canon:AlternateContinuity,
+            canon:Timeline ;
+        rdfs:label "Quantum Spin-Off Reality"^^xsd:string ;
+        canon:createdAt "2026-09-14T14:28:03.492758+00:00"^^xsd:dateTime ;
+        canon:divergesFrom timeline:prime-canon .
+
+    timeline:prime-canon a canon:PrimeCanon,
+            canon:Timeline ;
+        rdfs:label "Prime Canon Timeline"^^xsd:string ;
+        canon:createdAt "2026-09-14T14:28:03.490136+00:00"^^xsd:dateTime .
+}
+

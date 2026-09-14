@@ -39,6 +39,13 @@ Immutable sharded Content-Addressed Storage engine indexed by cryptographic BLAK
 - `verify_integrity(blake3_hash: str, raise_on_error: bool = False) -> bool`: Verifies stored file against computed checksum.
 - `exists(blake3_hash: str) -> bool`: Quick boolean existence test.
 
+### `S3CASBackend(endpoint_url, bucket, access_key, secret_key, region="us-east-1", secure=True)`
+Enterprise S3/MinIO/R2 Content-Addressed Storage backend featuring pure Python zero-dependency AWS SigV4 request signing:
+- `store_bytes(data: bytes, mime_type: str = "application/octet-stream") -> CASObject`: Computes BLAKE3 hash, signs SigV4 `PUT` request with `x-amz-content-sha256`, and uploads object to S3.
+- `retrieve_bytes(blake3_hash: str) -> bytes`: Streams object via signed SigV4 `GET` request.
+- `exists(blake3_hash: str) -> bool`: Lightweight signed SigV4 `HEAD` request checking object existence.
+- `verify_integrity(blake3_hash: str) -> bool`: Verifies payload BLAKE3 checksum matches key.
+
 ### `StageCompositionManager(stages_dir: Path)`
 Coordinates OpenUSD (`pxr.Usd.Stage`) life cycles, layer stacks, and sublayer references.
 - `create_stage(stage_uri: str, format: str = "usda") -> UsdStageReference`: Creates root layer with default prim `/World`.
@@ -76,6 +83,13 @@ Multiverse branching engine isolating spin-off storylines from prime canon.
 - `create_prime_canon(timeline_uri: str, name: str) -> TimelineModel`: Establishes immutable prime canon.
 - `branch_timeline(source_timeline_uri: str, new_timeline_slug: str, new_timeline_name: str, divergence_event_uri: Optional[str] = None) -> TimelineModel`: Clones source lore into an isolated timeline namespace.
 - `list_timelines() -> List[TimelineModel]`: Lists all active timelines.
+
+### `NarrativeGraphRAG(graph_path: str = "data/lore/graph.trig", fuseki_endpoint: Optional[str] = None)`
+Intelligent SPARQL Graph RAG narrative lore assistant bridging natural language prompts with W3C RDF semantic graphs:
+- `synthesize_sparql(natural_language_prompt: str) -> str`: Dynamically analyzes user intent (characters, battles, timelines, bounds) and authors standards-compliant `GRAPH ?g` SPARQL 1.1 queries.
+- `execute_sparql(sparql_query: str) -> List[Dict[str, str]]`: Runs query against local RDF triplestore or remote Apache Jena Fuseki endpoint.
+- `verify_temporal_bounds(triples: List[Dict[str, str]]) -> Dict[str, Any]`: Automatically audits chronological interval constraints ($birth\_epoch \le event\_epoch \le death\_epoch$) across retrieved character lore.
+- `answer_query(natural_language_prompt: str) -> Dict[str, Any]`: Orchestrates intent extraction, SPARQL generation, triple retrieval, timeline verification, and formatted natural language response synthesis.
 
 ---
 
@@ -189,8 +203,15 @@ Compiles OpenUSD stages into real-time game packages:
 - `generate_argo_workflow_spec(stage_uri: str, target_engines: List[str]) -> Dict[str, Any]`: Generates Kubernetes Argo Workflow DAG spec (`argoproj.io/v1alpha1`).
 - `generate_argo_workflow_yaml(...) -> str`: Emits ready-to-deploy YAML.
 
-### `ProductionCatalog()`
-Persistent registry indexing compiled packages and point caches with CAS hashes, stage URIs, and timestamps.
+### `ProductionCatalog(catalog_file: Optional[Path] = None, backend: Optional[Any] = None)`
+Persistent registry indexing compiled packages and point caches with CAS hashes, stage URIs, and timestamps. Supports JSON files or relational database backends.
+
+### `RelationalCatalogBackend(db_url: str = "sqlite:///catalog.db")`
+Enterprise relational database backend for the central production catalog supporting SQLite and PostgreSQL:
+- `register_build(entry: CatalogEntry) -> CatalogEntry`: Inserts build artifact into indexed relational table (`production_catalog`).
+- `list_builds(stage_uri: Optional[str] = None, target_engine: Optional[str] = None) -> List[CatalogEntry]`: Queries catalog with optional SQL filtering.
+- `get_build(catalog_id: str) -> Optional[CatalogEntry]`: Direct primary-key lookup.
+- `find_by_cas_hash(cas_hash: str) -> List[CatalogEntry]`: Instant reverse-index query for build deduplication.
 
 ---
 
@@ -203,8 +224,10 @@ Zero-dependency Python `http.server` request handler providing REST API endpoint
 - `GET /api/lore/timelines`: List narrative timelines (Prime Canon and divergent branches).
 - `POST /api/lore/branch`: Create a new timeline branch with divergence events.
 - `GET /api/lore/entities`: Query narrative characters, lifecycles, and narrative events.
+- `POST /api/narrative/assistant`: SPARQL Graph RAG copilot answering lore continuity queries.
 - `GET /api/daemon`: Inspect Edge Resolver daemon state, vector clock map, and sync rate.
-- `POST /api/daemon/edit`: Emit collaborative edits through the daemon.
+- `POST /api/daemon/edit`: Emit collaborative edits through the daemon (Record Collaborative Edit).
+- `POST /api/daemon/sever`: Simulate network partition / severance and toggle offline shadow buffering.
 - `POST /api/partner/lint`: Quarantine linter auditing partner USD deliverables.
 - `POST /api/partner/promote`: TD 1-click promotion gate promoting sanitized assets to stage.
 - `GET /api/provenance`: Harvester inspecting Prim DAG hashes and cryptographic signatures.

@@ -10,7 +10,8 @@ __pycache__/
 .Python
 build/
 develop-eggs/
-dist/
+/dist/
+!web/dist/
 downloads/
 eggs/
 .eggs/
@@ -67,7 +68,11 @@ cover/
 *.usda.tmp
 *.usdc.tmp
 *.b3hash.tmp
-/data/
+/data/cas/
+/data/stages/
+/data/builds/
+/data/quarantine/
+!/data/lore/
 /cas_storage/
 
 # Temporal & Kafka temp logs
