@@ -81,25 +81,62 @@ export default function PartnerEnclaveView() {
               </div>
               <input
                 type="range"
-                min="0.05"
-                max="0.5"
-                step="0.05"
+                min="0.01"
+                max="1.0"
+                step="0.01"
                 value={decimationRatio}
                 onChange={(e) => setDecimationRatio(parseFloat(e.target.value))}
-                className="w-full accent-indigo-500"
+                className="w-full accent-indigo-500 cursor-pointer"
               />
+              <div className="flex justify-between text-[10px] text-neutral-500 mt-1">
+                <span>1% (Aggressive Proxy)</span>
+                <span>50% (Balanced)</span>
+                <span>100% (Full Geometry)</span>
+              </div>
+            </div>
+
+            {/* Quick Presets */}
+            <div className="flex items-center gap-1.5 pt-1">
+              <span className="text-[10px] text-neutral-500 mr-1">Presets:</span>
+              {[
+                { label: '10%', val: 0.10, desc: 'Ultra-Light Proxy' },
+                { label: '25%', val: 0.25, desc: 'Standard Review' },
+                { label: '50%', val: 0.50, desc: 'Balanced Layout' },
+                { label: '75%', val: 0.75, desc: 'High-Res Preview' },
+                { label: '100%', val: 1.00, desc: 'Full Mesh Fidelity' },
+              ].map((p) => (
+                <button
+                  key={p.label}
+                  onClick={() => setDecimationRatio(p.val)}
+                  className={`px-2 py-0.5 rounded text-[10px] transition-all cursor-pointer ${
+                    Math.abs(decimationRatio - p.val) < 0.01
+                      ? 'bg-indigo-600 text-white font-semibold shadow-sm'
+                      : 'bg-neutral-900 hover:bg-neutral-800 text-neutral-300 border border-neutral-800'
+                  }`}
+                  title={`${p.desc} (${(p.val * 100).toFixed(0)}%)`}
+                >
+                  {p.label}
+                </button>
+              ))}
             </div>
 
             <div className="flex items-center justify-between pt-2 border-t border-neutral-800/80">
               <span className="text-neutral-400">Neutral Clay Shader Substitution:</span>
               <button
                 onClick={() => setClayMode(!clayMode)}
-                className={`px-3 py-1 rounded text-xs font-semibold ${
+                className={`px-3 py-1 rounded text-xs font-semibold cursor-pointer transition-colors ${
                   clayMode ? 'bg-emerald-950 border border-emerald-700 text-emerald-400' : 'bg-neutral-800 text-neutral-400'
                 }`}
               >
                 {clayMode ? 'ENABLED (RGB: 0.7, 0.7, 0.7)' : 'DISABLED'}
               </button>
+            </div>
+
+            <div className="pt-2 border-t border-neutral-800/80 text-[11px] text-neutral-400 flex items-center justify-between">
+              <span>Estimated Outbound Faces:</span>
+              <span className="text-indigo-300 font-bold font-mono">
+                {Math.round(120000 * decimationRatio).toLocaleString()} / 120,000 faces ({decimationRatio < 1.0 ? `-${Math.round((1 - decimationRatio) * 100)}% reduced` : 'original mesh'})
+              </span>
             </div>
 
             <div className="pt-2 border-t border-neutral-800/80 text-[11px] text-neutral-500">
