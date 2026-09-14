@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { DollarSign, ShieldCheck, CheckCircle2, FileText, Key, Percent, PieChart } from 'lucide-react';
+import { DollarSign, ShieldCheck, CheckCircle2, FileText, Key, Percent, PieChart, Download } from 'lucide-react';
 
 export default function ProvenanceLedgerView() {
   const [manifest] = useState({
@@ -25,10 +25,22 @@ export default function ProvenanceLedgerView() {
 
   const totalRoyalties = Object.values(manifest.royalty_splits).reduce((a, b) => a + b, 0);
 
+  const downloadProvenanceManifest = () => {
+    const blob = new Blob([JSON.stringify(manifest, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'hero_scene_provenance_manifest.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="flex-1 p-6 overflow-y-auto max-w-7xl mx-auto w-full space-y-6">
       {/* Header Banner */}
-      <div className="flex items-center justify-between bg-neutral-900/60 p-4 rounded-xl border border-neutral-800">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-neutral-900/60 p-4 rounded-xl border border-neutral-800">
         <div>
           <div className="flex items-center gap-2">
             <h2 className="text-base font-semibold text-neutral-100">Asset Provenance & OPA Royalty Ledger</h2>
@@ -41,12 +53,23 @@ export default function ProvenanceLedgerView() {
           </p>
         </div>
 
-        {/* Cryptographic Signature Card */}
-        <div className="bg-neutral-950 p-3 rounded-lg border border-neutral-800 font-mono text-xs text-right">
-          <div className="text-[10px] text-neutral-500 flex items-center justify-end gap-1">
-            <Key className="w-3 h-3 text-indigo-400" /> HMAC-SHA256 Manifest Signature
+        <div className="flex items-center gap-3 self-end sm:self-center">
+          <button
+            onClick={downloadProvenanceManifest}
+            className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg border border-indigo-500 shadow-md transition-all cursor-pointer"
+            title="Download cryptographic provenance manifest"
+          >
+            <Download className="w-3.5 h-3.5" />
+            <span>Download Manifest</span>
+          </button>
+
+          {/* Cryptographic Signature Card */}
+          <div className="bg-neutral-950 p-3 rounded-lg border border-neutral-800 font-mono text-xs text-right">
+            <div className="text-[10px] text-neutral-500 flex items-center justify-end gap-1">
+              <Key className="w-3 h-3 text-indigo-400" /> HMAC-SHA256 Manifest Signature
+            </div>
+            <div className="text-emerald-400 font-bold tracking-wider">{manifest.digital_signature.slice(0, 16)}... [VERIFIED]</div>
           </div>
-          <div className="text-emerald-400 font-bold tracking-wider">{manifest.digital_signature.slice(0, 16)}... [VERIFIED]</div>
         </div>
       </div>
 

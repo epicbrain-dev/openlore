@@ -89,6 +89,57 @@ export default function CompilationGridView() {
     }, 1200);
   };
 
+  const downloadManifest = (build) => {
+    const manifestData = {
+      catalog_id: build.id,
+      stage_uri: build.stage_uri,
+      build_type: build.build_type,
+      artifact_file: build.artifact_file,
+      cas_hash: build.cas_hash,
+      registered_at: build.registered_at,
+      provenance: {
+        schema_version: '1.0.0',
+        format: 'OpenUSD 24.08',
+        compiler: 'OpenLore Temporal Worker Grid',
+        engine_target: build.build_type.includes('unreal')
+          ? 'Unreal Engine 5.4+ (Nanite/Lumen)'
+          : build.build_type.includes('unity')
+          ? 'Unity 6000.0+ (URP/HDRP)'
+          : 'Cinematic USD Point Cache (24 FPS)',
+      },
+      status: 'APPROVED_FOR_RELEASE',
+    };
+
+    const blob = new Blob([JSON.stringify(manifestData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${build.artifact_file}.manifest.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const downloadFullCatalog = () => {
+    const catalogData = {
+      version: '1.0.0',
+      stage_uri: 'openlore://stages/hero_scene.usda',
+      total_builds: catalogBuilds.length,
+      exported_at: new Date().toISOString(),
+      builds: catalogBuilds,
+    };
+    const blob = new Blob([JSON.stringify(catalogData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'openlore_production_catalog.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="flex-1 p-6 overflow-y-auto max-w-7xl mx-auto w-full space-y-6">
       {/* Header Banner */}
@@ -211,9 +262,19 @@ export default function CompilationGridView() {
 
       {/* Central Production Catalog */}
       <div className="bg-neutral-900/60 p-5 rounded-xl border border-neutral-800">
-        <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-300 mb-3 flex items-center gap-2">
-          <Database className="w-4 h-4 text-indigo-400" /> Central Production Catalog Ledger ({catalogBuilds.length})
-        </h3>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-300 flex items-center gap-2">
+            <Database className="w-4 h-4 text-indigo-400" /> Central Production Catalog Ledger ({catalogBuilds.length})
+          </h3>
+          <button
+            onClick={downloadFullCatalog}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-neutral-800 hover:bg-neutral-700 text-indigo-300 hover:text-indigo-200 rounded-lg border border-neutral-700 hover:border-indigo-500/50 transition-colors cursor-pointer shadow-sm w-fit"
+            title="Download full catalog as JSON manifest"
+          >
+            <Download className="w-3.5 h-3.5 text-indigo-400" />
+            <span>Download Full Catalog Manifest</span>
+          </button>
+        </div>
 
         <div className="overflow-x-auto">
           <table className="w-full text-left font-mono text-xs">
@@ -223,7 +284,8 @@ export default function CompilationGridView() {
                 <th className="pb-2">Target Build Type</th>
                 <th className="pb-2">Artifact Filename</th>
                 <th className="pb-2">CAS Hash (BLAKE3)</th>
-                <th className="pb-2 text-right">Registered Timestamp</th>
+                <th className="pb-2">Registered Timestamp</th>
+                <th className="pb-2 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-neutral-800/60">
@@ -237,7 +299,17 @@ export default function CompilationGridView() {
                   </td>
                   <td className="py-2.5 text-neutral-200 font-medium">{b.artifact_file}</td>
                   <td className="py-2.5 text-neutral-400">{b.cas_hash.slice(0, 16)}...</td>
-                  <td className="py-2.5 text-neutral-500 text-right">{b.registered_at}</td>
+                  <td className="py-2.5 text-neutral-500">{b.registered_at}</td>
+                  <td className="py-2.5 text-right">
+                    <button
+                      onClick={() => downloadManifest(b)}
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-medium bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-300 hover:text-indigo-100 rounded border border-indigo-500/40 hover:border-indigo-500/80 transition-colors cursor-pointer"
+                      title={`Download manifest for ${b.artifact_file}`}
+                    >
+                      <Download className="w-3 h-3 text-indigo-400" />
+                      <span>Download Manifest</span>
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>
