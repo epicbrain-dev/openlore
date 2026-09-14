@@ -37,7 +37,7 @@ COPY schemas/ ./schemas/
 # Copy compiled frontend assets from Stage 1
 COPY --from=frontend-builder /build/web/dist ./web/dist
 
-RUN pip install --no-cache-dir .
+RUN pip install --no-cache-dir . "psycopg[binary]"
 
 # Create non-root system user for security hardening
 RUN groupadd -r openlore && useradd -r -g openlore -d /app -s /sbin/nologin openlore \

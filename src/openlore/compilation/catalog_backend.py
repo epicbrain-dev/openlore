@@ -111,6 +111,14 @@ class RelationalCatalogBackend(AbstractCatalogBackend):
         self.db_url = db_url or get_config().database_url
         self.is_postgres = self.db_url.startswith("postgres://") or self.db_url.startswith("postgresql://")
         self._sqlite_path: Optional[str] = None
+        self._mem_conn: Optional[sqlite3.Connection] = None
+
+        if self.is_postgres:
+            try:
+                import psycopg
+            except ImportError:
+                self.is_postgres = False
+                self._sqlite_path = ":memory:"
 
         if not self.is_postgres:
             # Parse sqlite URI e.g. sqlite:///path/to/db or sqlite://:memory:
@@ -118,24 +126,33 @@ class RelationalCatalogBackend(AbstractCatalogBackend):
                 self._sqlite_path = self.db_url.replace("sqlite:///", "")
                 if self._sqlite_path != ":memory:":
                     Path(self._sqlite_path).parent.mkdir(parents=True, exist_ok=True)
-            else:
+            elif not self._sqlite_path:
                 self._sqlite_path = ":memory:"
 
         self._init_schema()
 
     def _get_connection(self) -> sqlite3.Connection:
         if self.is_postgres:
-            try:
-                import psycopg
-                return psycopg.connect(self.db_url)
-            except ImportError:
-                # Fallback to in-memory sqlite if postgres driver not installed in current environment
-                self._sqlite_path = ":memory:"
-                self.is_postgres = False
+            import psycopg
+            return psycopg.connect(self.db_url)
+
+        if self._sqlite_path == ":memory:":
+            if self._mem_conn is None:
+                self._mem_conn = sqlite3.connect(":memory:")
+                self._mem_conn.row_factory = sqlite3.Row
+            return self._mem_conn
 
         conn = sqlite3.connect(self._sqlite_path or ":memory:")
         conn.row_factory = sqlite3.Row
         return conn
+
+    def _close_conn(self, conn: Any) -> None:
+        if self._mem_conn is not None and conn is self._mem_conn:
+            return
+        try:
+            conn.close()
+        except Exception:
+            pass
 
     def _init_schema(self) -> None:
         """Create database tables and performance indexes."""
@@ -157,7 +174,7 @@ class RelationalCatalogBackend(AbstractCatalogBackend):
                 conn.execute("CREATE INDEX IF NOT EXISTS idx_builds_hash ON openlore_builds(cas_hash);")
                 conn.execute("CREATE INDEX IF NOT EXISTS idx_builds_type ON openlore_builds(build_type);")
         finally:
-            conn.close()
+            self._close_conn(conn)
 
     def register_build(
         self,
@@ -183,7 +200,7 @@ class RelationalCatalogBackend(AbstractCatalogBackend):
                     (catalog_id, stage_uri, build_type, str(artifact_path), cas_hash, now_iso, meta_json),
                 )
         finally:
-            conn.close()
+            self._close_conn(conn)
 
         return {
             "catalog_id": catalog_id,
@@ -214,7 +231,7 @@ class RelationalCatalogBackend(AbstractCatalogBackend):
             row = cur.fetchone()
             return self._row_to_dict(row) if row else None
         finally:
-            conn.close()
+            self._close_conn(conn)
 
     def get_builds_for_stage(self, stage_uri: str) -> List[Dict[str, Any]]:
         conn = self._get_connection()
@@ -223,7 +240,7 @@ class RelationalCatalogBackend(AbstractCatalogBackend):
             cur.execute("SELECT * FROM openlore_builds WHERE stage_uri = ? ORDER BY registered_at DESC", (stage_uri,))
             return [self._row_to_dict(r) for r in cur.fetchall()]
         finally:
-            conn.close()
+            self._close_conn(conn)
 
     def list_all_builds(self) -> List[Dict[str, Any]]:
         conn = self._get_connection()
@@ -232,7 +249,7 @@ class RelationalCatalogBackend(AbstractCatalogBackend):
             cur.execute("SELECT * FROM openlore_builds ORDER BY registered_at DESC")
             return [self._row_to_dict(r) for r in cur.fetchall()]
         finally:
-            conn.close()
+            self._close_conn(conn)
 
     def save_catalog(self, file_path: Path) -> None:
         records = self.list_all_builds()
@@ -266,4 +283,4 @@ class RelationalCatalogBackend(AbstractCatalogBackend):
                         ),
                     )
         finally:
-            conn.close()
+            self._close_conn(conn)
