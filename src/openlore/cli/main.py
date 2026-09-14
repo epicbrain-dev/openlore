@@ -5,8 +5,11 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+import warnings
 from pathlib import Path
 from typing import Sequence
+
+warnings.filterwarnings("ignore", message=".*urllib3 v2.*")
 
 from openlore.compilation.grid import ProductionCatalog, WorkerGridDispatcher
 from openlore.core.cas import ContentAddressedStorage
