@@ -43,6 +43,7 @@ _Target Audience: Pipeline TDs, Lead 3D Artists, Narrative Directors, Game Devel
    - [5.2 Autodesk Maya Integration Guide](#52-autodesk-maya-integration-guide)
    - [5.3 Unreal Engine 5 Live Link Integration Guide](#53-unreal-engine-5-live-link-integration-guide)
    - [5.4 SideFX Houdini 20 (Solaris / USD LOPs) Integration Guide](#54-sidefx-houdini-20-solaris--usd-lops-integration-guide)
+   - [5.5 Unity 6 Live Link Integration Guide](#55-unity-6-live-link-integration-guide)
 6. [Enterprise Security, RBAC & OPA Rego Policies](#6-enterprise-security-rbac--opa-rego-policies)
    - [6.1 Role-Based Access Control (RBAC)](#61-role-based-access-control-rbac)
    - [6.2 Cryptographic DAG Manifests & Verification](#62-cryptographic-dag-manifests--verification)
@@ -656,6 +657,42 @@ openlore_houdini_bridge.show_ui()
 For CI/CD pipelines or headless rendering farm nodes where Houdini is not installed, verify the bridge using the automated test suite:
 ```bash
 python3 scripts/verify_houdini_bridge.py
+```
+
+---
+
+## 5.5 Unity 6 Live Link Integration Guide
+
+The OpenLore Unity 6 Bridge enables real-time transform streaming and camera tracking ingestion directly into Unity scenes over UDP datagrams.
+
+### Step 1: Export the Unity Package
+```bash
+python3 -c "from openlore.dcc.unity import UnityBridgeScaffolder; from pathlib import Path; UnityBridgeScaffolder.export(Path('./dcc_exports/unity'))"
+```
+This produces:
+- `dcc_exports/unity/OpenLoreLiveLinkClient.cs`: Unity C# `MonoBehaviour` client.
+- `dcc_exports/unity/package.json`: Unity Package Manager (UPM) package manifest (`com.openlore.livelink`).
+
+### Step 2: Install into Your Unity Project
+1. Open your Unity 6 project.
+2. In the menu, select **Window -> Package Manager**.
+3. Click the **`+`** icon in the upper-left corner of Package Manager.
+4. Select **Add package from disk...** and choose `dcc_exports/unity/package.json`.
+5. Unity will import the OpenLore Live Link package into your project under `Packages/OpenLore Live Link Bridge`.
+
+### Step 3: Attach Client to Camera or GameObject
+1. Select your Main Camera or a CineCamera in the Hierarchy.
+2. In the Inspector, click **`Add Component`** and search for **`OpenLore Live Link Client`**.
+3. Configure the component:
+   - **Listen Port**: `11111`
+   - **Target Subject Name**: `Camera_StageA` (or subject name matching your live stream)
+   - **Target Camera**: Drag the Camera component here to drive FOV and focal length.
+4. Enter Play mode or view in Edit mode: the camera will follow the real-time OpenLore stream with automated coordinate conversion ($X \times 0.01$, $Y \times 0.01$, $Z \times 0.01$).
+
+### Step 4: Headless Offline Verification
+Verify Unity coordinate conversion and network ingestion without launching the Unity Editor:
+```bash
+python3 scripts/verify_unity_bridge.py
 ```
 
 ---

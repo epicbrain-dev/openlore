@@ -8,10 +8,11 @@ from typing import Dict
 from openlore.dcc.blender import BlenderAddonScaffolder
 from openlore.dcc.houdini import HoudiniBridgeScaffolder
 from openlore.dcc.maya import MayaBridgeScaffolder
+from openlore.dcc.unity import UnityBridgeScaffolder
 
 
 class DCCExporter:
-    """Exports native DCC connectors for Blender, Maya, and Houdini Solaris."""
+    """Exports native DCC connectors for Blender, Maya, Houdini Solaris, and Unity 6."""
 
     @staticmethod
     def export_all(base_output_dir: Path) -> Dict[str, Path]:
@@ -19,13 +20,16 @@ class DCCExporter:
         blender_dir = base / "blender"
         maya_dir = base / "maya"
         houdini_dir = base / "houdini"
+        unity_dir = base / "unity"
 
         blender_file = BlenderAddonScaffolder.export(blender_dir)
         maya_file = MayaBridgeScaffolder.export(maya_dir)
         houdini_file = HoudiniBridgeScaffolder.export(houdini_dir)
+        unity_file = UnityBridgeScaffolder.export(unity_dir)
 
         return {
             "blender": blender_file,
             "maya": maya_file,
             "houdini": houdini_file,
+            "unity": unity_file,
         }

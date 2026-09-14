@@ -105,6 +105,19 @@ def build_release_packages(output_dir: Path) -> None:
                 z.write(full_path, arcname=str(Path("OpenLoreLiveLink") / rel_path))
     print(f"  ✅ Created {unreal_zip.name} ({unreal_zip.stat().st_size:,} bytes)")
 
+    # Unity Package Zip
+    unity_zip = output_dir / f"openlore-unity-livelink-v{version}.zip"
+    with zipfile.ZipFile(unity_zip, "w", zipfile.ZIP_DEFLATED) as z:
+        z.write(
+            dcc_dir / "unity" / "OpenLoreLiveLinkClient.cs",
+            arcname="com.openlore.livelink/Runtime/OpenLoreLiveLinkClient.cs"
+        )
+        z.write(
+            dcc_dir / "unity" / "package.json",
+            arcname="com.openlore.livelink/package.json"
+        )
+    print(f"  ✅ Created {unity_zip.name} ({unity_zip.stat().st_size:,} bytes)")
+
     # 5. Generate Checksums
     print("\n[5/5] Generating SHA-256 Checksums...")
     checksums_file = output_dir / "SHA256SUMS.txt"
