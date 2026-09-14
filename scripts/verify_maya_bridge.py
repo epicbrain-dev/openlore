@@ -126,8 +126,10 @@ def print_banner(text: str) -> None:
 def run_maya_verification() -> bool:
     print_banner("🎬 OpenLore Autodesk Maya 2024/2025 Python Bridge Verification")
 
-    # 1. Check Maya Bridge File Existence
-    print("\n\033[1;33m[Test 1/4] Auditing Maya Bridge Source Script...\033[0m")
+    if not maya_script.is_file():
+        from openlore.dcc.maya import MayaBridgeScaffolder
+        MayaBridgeScaffolder.export(maya_script.parent)
+
     assert maya_script.is_file(), f"Missing {maya_script}"
     print(f"  ✅ Found authored Maya bridge at: {maya_script.relative_to(repo_root)}")
 

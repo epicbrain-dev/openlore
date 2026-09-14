@@ -42,6 +42,7 @@ _Target Audience: Pipeline TDs, Lead 3D Artists, Narrative Directors, Game Devel
    - [5.1 Blender 4.x Integration Guide](#51-blender-4x-integration-guide)
    - [5.2 Autodesk Maya Integration Guide](#52-autodesk-maya-integration-guide)
    - [5.3 Unreal Engine 5 Live Link Integration Guide](#53-unreal-engine-5-live-link-integration-guide)
+   - [5.4 SideFX Houdini 20 (Solaris / USD LOPs) Integration Guide](#54-sidefx-houdini-20-solaris--usd-lops-integration-guide)
 6. [Enterprise Security, RBAC & OPA Rego Policies](#6-enterprise-security-rbac--opa-rego-policies)
    - [6.1 Role-Based Access Control (RBAC)](#61-role-based-access-control-rbac)
    - [6.2 Cryptographic DAG Manifests & Verification](#62-cryptographic-dag-manifests--verification)
@@ -616,6 +617,46 @@ In Unreal Editor:
 2. In the **Details** panel, click **`Add Component`** and select **`Live Link Controller`**.
 3. Under the Live Link Controller settings, set **Subject Representation** to `CineCameraActor`.
 4. Observe the Cine Camera in your level actively translating and rotating in real time matching the 60 FPS OpenLore stream.
+
+---
+
+## 5.4 SideFX Houdini 20 (Solaris / USD LOPs) Integration Guide
+
+The OpenLore Houdini Bridge connects SideFX Houdini 20 Solaris LOP stages and standard `/obj` scene cameras to OpenLore's real-time UDP Live Link stream.
+
+### Step 1: Export the Houdini Bridge & Solaris Shelf Tool
+```bash
+python3 -c "from openlore.dcc.houdini import HoudiniBridgeScaffolder; from pathlib import Path; HoudiniBridgeScaffolder.export(Path('./dcc_exports/houdini'))"
+```
+This produces:
+- `dcc_exports/houdini/openlore_houdini_bridge.py`: Python telemetry bridge and dialog UI.
+- `dcc_exports/houdini/openlore_solaris_shelf.shelf`: Native Houdini shelf definition.
+
+### Step 2: Install into Houdini Solaris
+1. Launch **SideFX Houdini 20**.
+2. Open the Solaris workspace (**Desktop -> Solaris**).
+3. Open the **Houdini Python Source Editor** (**Windows -> Python Source Editor**) and append:
+   ```python
+   import sys
+   sys.path.append("/path/to/openlore/dcc_exports/houdini")
+   ```
+4. Alternatively, load the shelf: In the Shelf area, click the `+` icon -> **Open Shelf File...** -> select `dcc_exports/houdini/openlore_solaris_shelf.shelf`.
+
+### Step 3: Interactive Streaming & Playbar Callback
+Click the **OpenLore Live Link** button on your shelf, or run in the Houdini Python Shell:
+```python
+import openlore_houdini_bridge
+openlore_houdini_bridge.show_ui()
+```
+1. Set **Host** (`127.0.0.1`), **Port** (`11111`), and **Subject Name** (`Houdini_SolarisCam`).
+2. Click **Start Stream**.
+3. Scrub the playbar timeline or hit Play: Houdini automatically emits camera coordinates, focal length, aperture, and FOV to OpenLore over UDP with automated coordinate conversion ($X \times 100$, $-Y \times 100$, $Z \times 100$).
+
+### Step 4: Headless Offline Verification
+For CI/CD pipelines or headless rendering farm nodes where Houdini is not installed, verify the bridge using the automated test suite:
+```bash
+python3 scripts/verify_houdini_bridge.py
+```
 
 ---
 
