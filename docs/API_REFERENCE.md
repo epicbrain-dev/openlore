@@ -8,7 +8,7 @@ The OpenLore software architecture provides a unified cross-media digital asset 
 
 ## Architecture Overview
 
-OpenLore is divided into 9 modular core domains:
+OpenLore is divided into 10 modular core domains:
 
 ```
 src/openlore/
@@ -19,6 +19,7 @@ src/openlore/
 ├── provenance/      # OpenUSD DAG harvester, HMAC-SHA256 signed manifests, OPA Rego royalty accounting
 ├── partner/         # Outbound geometric decimation/clay proxying, quarantined pre-flight linter, TD promotion gates, eBPF zero-egress
 ├── compilation/     # Temporal workflow dispatcher, Kubernetes Argo DAG generator, Unreal/Unity compilers, Shot point cache baker
+├── server/          # Zero-dependency Python REST API & SPA static hosting for studio dashboards
 ├── cli/             # Unified production command-line interface
 └── exceptions.py    # Standardized domain error taxonomy
 ```
@@ -191,7 +192,29 @@ Persistent registry indexing compiled packages and point caches with CAS hashes,
 
 ---
 
-## 8. CLI Command Summary
+## 8. `openlore.server`
+
+### `OpenLoreAPIHandler(request, client_address, server)`
+Zero-dependency Python `http.server` request handler providing REST API endpoints and Single-Page Application (SPA) static file serving with automatic CORS support:
+- `GET /api/status`: Engine health, CAS storage root, stage count, and system metrics.
+- `GET /api/stages`: List composed OpenUSD stages with prim inventories and sublayers.
+- `GET /api/lore/timelines`: List narrative timelines (Prime Canon and divergent branches).
+- `POST /api/lore/branch`: Create a new timeline branch with divergence events.
+- `GET /api/lore/entities`: Query narrative characters, lifecycles, and narrative events.
+- `GET /api/daemon`: Inspect Edge Resolver daemon state, vector clock map, and sync rate.
+- `POST /api/daemon/edit`: Emit collaborative edits through the daemon.
+- `POST /api/partner/lint`: Quarantine linter auditing partner USD deliverables.
+- `POST /api/partner/promote`: TD 1-click promotion gate promoting sanitized assets to stage.
+- `GET /api/provenance`: Harvester inspecting Prim DAG hashes and cryptographic signatures.
+- `POST /api/compile`: Dispatch cross-media compilation to Temporal / Argo grid.
+- `GET /api/catalog`: Central Production Catalog indexing compiled packages and point caches.
+
+### `run_server(host: str = "127.0.0.1", port: int = 8000, static_dir: Optional[Path] = None)`
+Initializes and serves `ThreadingHTTPServer` bound to the designated network interface and port.
+
+---
+
+## 9. CLI Command Summary
 
 | Command | Subcommand / Options | Description |
 |---|---|---|
@@ -203,3 +226,5 @@ Persistent registry indexing compiled packages and point caches with CAS hashes,
 | `openlore compile`| `--stage`, `--stage-path`, `--target` | Dispatch worker grid compilation (Unreal, Unity, Shot baker). |
 | `openlore catalog`| `list` | Inspect Central Production Catalog builds. |
 | `openlore export` | `--stage`, `--target` | Introspect DAG, evaluate OPA royalties, and trigger builds. |
+| `openlore web` | `--host`, `--port`, `--static-dir` | Launch REST API server & serve React Studio Cockpit dashboard. |
+

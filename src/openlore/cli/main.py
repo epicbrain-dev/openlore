@@ -88,6 +88,12 @@ def create_parser() -> argparse.ArgumentParser:
     export_cmd.add_argument("--stage-path", help="Local OpenUSD stage path if compiling directly")
     export_cmd.add_argument("--output-dir", default="./builds", help="Output directory for compiled artifacts")
 
+    # web
+    web_cmd = subparsers.add_parser("web", help="Start the OpenLore Web Studio and REST API server")
+    web_cmd.add_argument("--port", type=int, default=8000, help="Port to listen on (default 8000)")
+    web_cmd.add_argument("--host", default="127.0.0.1", help="Host address (default 127.0.0.1)")
+    web_cmd.add_argument("--static-dir", default="./web/dist", help="Directory containing compiled React frontend")
+
     return parser
 
 
@@ -371,6 +377,12 @@ def main(args: Sequence[str] | None = None) -> int:
                 )
                 print(f"[OpenLore Export] Downstream compilation completed. Workflow: {w_id}")
 
+        return 0
+
+    if parsed_args.command == "web":
+        from openlore.server.api import run_server
+        static_p = Path(parsed_args.static_dir)
+        run_server(port=parsed_args.port, host=parsed_args.host, static_dir=static_p if static_p.is_dir() else None)
         return 0
 
     print(f"[OpenLore] Command '{parsed_args.command}' execution stub.")

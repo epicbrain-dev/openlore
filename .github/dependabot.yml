@@ -11,6 +11,17 @@ updates:
       - "python"
     versioning-strategy: increase
 
+  # Maintain Web Dashboard npm package dependencies
+  - package-ecosystem: "npm"
+    directory: "/web"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+      - "javascript"
+    versioning-strategy: increase
+
   # Maintain GitHub Actions dependencies
   - package-ecosystem: "github-actions"
     directory: "/"
