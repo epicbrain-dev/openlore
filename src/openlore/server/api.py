@@ -58,6 +58,11 @@ class OpenLoreAPIHandler(BaseHTTPRequestHandler):
         self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization")
 
     def do_OPTIONS(self) -> None:
+        self.send_response(HTTPStatus.NO_CONTENT)
+        self._send_cors_headers()
+        self.end_headers()
+
+    def do_HEAD(self) -> None:
         self.send_response(HTTPStatus.OK)
         self._send_cors_headers()
         self.end_headers()
