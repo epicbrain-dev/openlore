@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 from collections import defaultdict
-from typing import Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 from openlore.collaboration.crdt import CRDTPartialMutation
 from openlore.exceptions import SecurityPolicyError
