@@ -33,5 +33,7 @@ jobs:
           mypy src
 
       - name: Run Pytest Suite
+        env:
+          PYTHONPATH: src
         run: |
           pytest --cov=openlore tests/
