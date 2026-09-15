@@ -1,9 +1,5 @@
 <p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="assets/openlore-logo-dark.png">
-    <source media="(prefers-color-scheme: light)" srcset="assets/openlore-logo-light.png">
-    <img alt="OpenLore" src="assets/openlore-logo-dark.png" width="85%" />
-  </picture>
+  <img src="assets/hero-banner.jpg" alt="OpenLore — Version Control & Lore Engine for 3D Worlds" width="100%" />
 </p>
 
 # OpenLore
