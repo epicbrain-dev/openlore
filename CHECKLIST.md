@@ -235,8 +235,8 @@
   - [x] Implemented non-interactive scripted modes (`--yes`, `--prefix`, `--with-dcc`, `--launch-web`, `--no-modify-path`).
   - [x] Implemented complete clean uninstaller (`installer.py --uninstall`).
 - [x] **1-Line Shell Installers**:
-  - [x] Authored macOS / Linux turnkey script in [install.sh](install.sh) (`curl -fsSL https://openlore.io/install.sh | bash`).
-  - [x] Authored Windows PowerShell script in [install.ps1](install.ps1) (`irm https://openlore.io/install.ps1 | iex`).
+  - [x] Authored macOS / Linux turnkey script in [install.sh](install.sh) (`curl -fsSL https://raw.githubusercontent.com/epicbrain-dev/openlore/main/install.sh | bash`).
+  - [x] Authored Windows PowerShell script in [install.ps1](install.ps1) (`irm https://raw.githubusercontent.com/epicbrain-dev/openlore/main/install.ps1 | iex`).
 - [x] **System Doctor & Web Asset Fallbacks**:
   - [x] Added `openlore doctor` in [src/openlore/cli/main.py](src/openlore/cli/main.py) diagnosing OS, CAS permissions, dependencies, ports, and DCCs with optional `--json` export.
   - [x] Added multi-path static asset resolution in `openlore web` enabling seamless execution from any working directory.

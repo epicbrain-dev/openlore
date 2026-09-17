@@ -5,7 +5,7 @@
     Provisions isolated Python runtime, installs OpenLore, deploys Web Cockpit assets,
     creates executable shims (openlore.cmd, openlore.ps1), and configures Windows User PATH.
 .EXAMPLE
-    irm https://get.openlore.io/install.ps1 | iex
+    irm https://raw.githubusercontent.com/epicbrain-dev/openlore/main/install.ps1 | iex
 .EXAMPLE
     powershell -ExecutionPolicy Bypass -File .\install.ps1 -Yes
 #>

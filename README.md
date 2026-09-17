@@ -137,12 +137,12 @@ Install OpenLore automatically with an isolated runtime, pre-configured launcher
 
 **macOS & Linux:**
 ```bash
-curl -fsSL https://openlore.io/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/epicbrain-dev/openlore/main/install.sh | bash
 ```
 
 **Windows (PowerShell 5.1+ / 7+):**
 ```powershell
-irm https://openlore.io/install.ps1 | iex
+irm https://raw.githubusercontent.com/epicbrain-dev/openlore/main/install.ps1 | iex
 ```
 
 **Universal Python (Any Platform):**

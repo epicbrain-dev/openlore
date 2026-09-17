@@ -3,8 +3,8 @@
 # OpenLore Cross-Platform Installer for macOS & Linux
 # Usage:
 #   Local:  ./install.sh [options]
-#   Remote: curl -fsSL https://get.openlore.io/install.sh | bash
-#   Remote with args: curl -fsSL https://get.openlore.io/install.sh | bash -s -- -y
+#   Remote: curl -fsSL https://raw.githubusercontent.com/epicbrain-dev/openlore/main/install.sh | bash
+#   Remote with args: curl -fsSL https://raw.githubusercontent.com/epicbrain-dev/openlore/main/install.sh | bash -s -- -y
 # ==============================================================================
 
 set -e
