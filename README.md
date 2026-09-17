@@ -16,7 +16,7 @@
   <a href="#kafka"><img src="https://img.shields.io/badge/Streaming-Kafka%20%7C%20CRDT-231F20.svg?logo=apachekafka&logoColor=white" alt="Kafka CRDT" /></a>
   <a href="#opa"><img src="https://img.shields.io/badge/Policy-OPA%20Rego-green.svg" alt="OPA Rego" /></a>
   <a href="#temporal"><img src="https://img.shields.io/badge/Grid-Temporal%20%7C%20Argo-red.svg" alt="Temporal / Argo" /></a>
-  <a href="#tests"><img src="https://img.shields.io/badge/Tests-127%20Passing-brightgreen.svg" alt="127 Tests Passing" /></a>
+  <a href="#tests"><img src="https://img.shields.io/badge/Tests-139%20Passing-brightgreen.svg" alt="139 Tests Passing" /></a>
 </p>
 
 <p align="center">
@@ -150,13 +150,13 @@ Pre-compiled packages and standalone DCC bridge archives are available on each [
 
 | Distribution Package | Target Environment | Description |
 |---|---|---|
-| `openlore-1.0.1-py3-none-any.whl` | Python 3.9+ | Universal wheel containing CLI, server, and core SDK |
-| `openlore-blender-addon-v1.0.1.zip` | Blender 4.x | Standard Blender zip add-on for Live Link & CAS sync |
-| `openlore-maya-bridge-v1.0.1.zip` | Autodesk Maya 2024+ | Maya scriptJob telemetry connector |
-| `openlore-houdini-solaris-v1.0.1.zip` | SideFX Houdini 20 | Solaris USD LOPs shelf tool and telemetry bridge |
-| `openlore-unreal-livelink-v1.0.1.zip` | Unreal Engine 5.3 / 5.4 | Turnkey C++ Live Link plugin (`Plugins/OpenLoreLiveLink`) |
-| `openlore-unity-livelink-v1.0.1.zip` | Unity 6 / 2023 LTS | Unity Package Manager (UPM) client |
-| `openlore-cpp-sdk-v1.0.1.zip` | C++17 Engines / DCCs | Zero-dependency header-only C++ SDK (`openlore.hpp`) |
+| `openlore-1.0.2-py3-none-any.whl` | Python 3.9+ | Universal wheel containing CLI, server, and core SDK |
+| `openlore-blender-addon-v1.0.2.zip` | Blender 4.x | Standard Blender zip add-on for Live Link & CAS sync |
+| `openlore-maya-bridge-v1.0.2.zip` | Autodesk Maya 2024+ | Maya scriptJob telemetry connector |
+| `openlore-houdini-solaris-v1.0.2.zip` | SideFX Houdini 20 | Solaris USD LOPs shelf tool and telemetry bridge |
+| `openlore-unreal-livelink-v1.0.2.zip` | Unreal Engine 5.3 / 5.4 | Turnkey C++ Live Link plugin (`Plugins/OpenLoreLiveLink`) |
+| `openlore-unity-livelink-v1.0.2.zip` | Unity 6 / 2023 LTS | Unity Package Manager (UPM) client |
+| `openlore-cpp-sdk-v1.0.2.zip` | C++17 Engines / DCCs | Zero-dependency header-only C++ SDK (`openlore.hpp`) |
 
 
 ### Step 2: Launch the Studio Cockpit
@@ -181,7 +181,7 @@ curl -s http://localhost:8000/api/status | python3 -m json.tool
 ```json
 {
     "status": "ONLINE",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "environment": "development",
     "cas_backend": "filesystem",
     "catalog_backend": "json",
@@ -366,7 +366,7 @@ openlore/
 │       ├── provenance/           # OpenUSD DAG harvester, HMAC manifests, OPA
 │       ├── server/               # HTTP REST API, WebSocket gateway & SPA host
 │       └── config.py             # Environment configuration (Dev, Staging, Prod)
-├── tests/                        # Comprehensive test suite (101/101 passing)
+├── tests/                        # Comprehensive test suite (139/139 passing across 26 modules)
 │   ├── integration/
 │   └── unit/
 ├── web/                          # OpenLore Studio Cockpit (React 19 + Three.js)
@@ -388,11 +388,11 @@ openlore/
 OpenLore includes a rigorous unit and integration test suite covering all domains:
 
 ```bash
-PYTHONPATH=src python3 -m unittest discover tests/
+pytest
 ```
 
 ```text
-Ran 101 tests in 3.06s
+Ran 139 tests in 5.1s
 OK
 
 [OpenLore Integration] All 10 architectural pillars successfully executed and verified end-to-end!

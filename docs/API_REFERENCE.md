@@ -61,6 +61,12 @@ Isolates lightweight metadata mutations from binary payloads with transactional 
 - `session.commit(message: str) -> TransactionalEdit`: Atomically commits all staged deltas and records git-style commit history.
 - `get_commit_history(stage_uri: str) -> List[TransactionalEdit]`: Returns linear commit chain from `HEAD`.
 
+### `validate_safe_path(target_path: Union[str, Path], allowed_root: Union[str, Path], must_exist: bool = False) -> Path`
+Defensive boundary validation utility preventing CWE-22 Path Traversal vulnerabilities:
+- Resolves symlinks and normalizes relative segments via `resolve()`.
+- Enforces strict boundary isolation (`Path.is_relative_to(root)`).
+- Raises `PathTraversalError` on escaping paths or traversal attempts (`../`, absolute path overrides).
+
 ---
 
 ## 2. `openlore.narrative`

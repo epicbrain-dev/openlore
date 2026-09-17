@@ -187,7 +187,7 @@
   - [x] Wired up all CLI commands in [src/openlore/cli/main.py](src/openlore/cli/main.py) (`init`, `stage`, `lore`, `daemon`, `partner`, `compile`, `catalog`, `export`, `livelink`, `auth`, `dcc`, `farm`).
   - [x] Generated complete API reference documentation in [docs/API_REFERENCE.md](docs/API_REFERENCE.md).
   - [x] Generated enterprise production deployment and disaster recovery runbooks in [docs/DEPLOYMENT_RUNBOOK.md](docs/DEPLOYMENT_RUNBOOK.md).
-  - [x] Verified full unit and integration test suites (127/127 passing across 25 modules).
+  - [x] Verified full unit and integration test suites (139/139 passing across 26 modules).
 
 ---
 
@@ -204,11 +204,21 @@
   - [x] Implemented native Vector Clock causal domination and CAS BLAKE3 hash representation.
   - [x] Built UDP broadcast and telemetry receiver client for C++ DCC plugins (Maya, Houdini HDK, Unreal).
   - [x] Authored cross-language binary interoperability test in [tests/unit/test_cpp_sdk.py](tests/unit/test_cpp_sdk.py) compiling under `-Wall -Wextra -Werror`.
-  - [x] Packaged `openlore-cpp-sdk-v1.0.1.zip` in release automation with SHA-256 checksums.
+  - [x] Packaged `openlore-cpp-sdk-v1.0.2.zip` in release automation with SHA-256 checksums.
 - [x] **Distributed GPU Farm Dispatcher**:
   - [x] Implemented `RenderFarmDispatcher` in [src/openlore/compilation/farm.py](src/openlore/compilation/farm.py).
   - [x] Generated AWS Deadline 10 / Deadline Cloud `job_info.job` and `plugin_info.job` bundles for Karma, Arnold, RenderMan, and usdrecord.
   - [x] Generated Academy Software Foundation (ASWF) OpenCue XML outline specifications (`opencue_outline.xml`) with GPU reservations.
   - [x] Integrated farm dispatching into `WorkerGridDispatcher` and CLI (`openlore farm submit`).
   - [x] Authored comprehensive unit tests in [tests/unit/test_farm.py](tests/unit/test_farm.py).
+
+---
+
+## Phase 11: Security Hardening & v1.0.2 Release
+- [x] **CodeQL CWE-22 Path Traversal Remediation**:
+  - [x] Implemented centralized path containment boundary utility in [src/openlore/core/path_safety.py](src/openlore/core/path_safety.py) with canonical symlink resolution and explicit root confinement checks.
+  - [x] Remediated all 20 CodeQL High Severity path injection alerts across REST API handlers, quarantine linter, compilation worker grid, engine packager, and shot point cache baker.
+  - [x] Added rigorous security test suite in [tests/unit/test_path_safety.py](tests/unit/test_path_safety.py) and regression tests in [tests/unit/test_server.py](tests/unit/test_server.py).
+  - [x] Rebuilt frontend bundle (`web/dist/`) and bumped version to `1.0.2` across Python, C++ SDK, Helm, Docker, and Web assets.
+  - [x] Verified 100% test pass rate (139/139 passing across 26 modules).
 

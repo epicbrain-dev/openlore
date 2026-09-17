@@ -50,7 +50,7 @@ export default function App() {
                 OpenLore <span className="text-xs text-indigo-400 font-mono font-medium">Studio Cockpit</span>
               </h1>
               <span className="text-[10px] font-mono px-1.5 py-0.5 bg-neutral-800 text-neutral-400 rounded border border-neutral-700">
-                v1.0.0
+                v1.0.2
               </span>
             </div>
             <p className="text-[11px] text-neutral-400 font-normal">Git for 3D worlds, game lore, and Hollywood pipelines</p>

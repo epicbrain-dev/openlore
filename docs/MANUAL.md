@@ -1,7 +1,7 @@
 # OpenLore: Comprehensive Instruction & Operations Manual
 
 _Tagline: "Git for 3D worlds, game lore, and Hollywood pipelines."_  
-_Document Version: 1.0.0 (Production Release)_  
+_Document Version: 1.0.2 (Production Release)_  
 _Target Audience: Pipeline TDs, Lead 3D Artists, Narrative Directors, Game Developers, DevOps Engineers, and Studio Systems Administrators._
 
 ---
