@@ -8,6 +8,7 @@ import unittest
 import urllib.request
 from http.server import ThreadingHTTPServer
 
+from openlore import __version__
 from openlore.server.api import OpenLoreAPIHandler
 
 
@@ -120,7 +121,7 @@ class TestOpenLoreAPIServer(unittest.TestCase):
         for probe_path in ("/health", "/api/health"):
             data = self._get_json(probe_path)
             self.assertEqual(data["status"], "UP")
-            self.assertEqual(data["version"], "1.0.0")
+            self.assertEqual(data["version"], __version__)
 
     def test_not_found_endpoint(self) -> None:
         url = f"{self.base_url}/api/nonexistent_route"

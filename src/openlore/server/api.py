@@ -16,6 +16,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any, Dict, Optional
 
+from openlore import __version__
 from openlore.collaboration.kafka_stream import KafkaEventStream
 from openlore.bridge.unreal.bridge import UnrealLiveLinkBridge
 from openlore.collaboration.resolver import EdgeResolverDaemon
@@ -156,7 +157,7 @@ class OpenLoreAPIHandler(BaseHTTPRequestHandler):
 
         # Healthcheck liveness & readiness probe (exempt from authentication)
         if path in ("/health", "/api/health"):
-            self._send_json({"status": "UP", "version": "1.0.0"})
+            self._send_json({"status": "UP", "version": __version__})
             return
 
         # Security Authentication Check for protected REST API routes
@@ -172,7 +173,7 @@ class OpenLoreAPIHandler(BaseHTTPRequestHandler):
             cfg = get_config()
             self._send_json({
                 "status": "ONLINE",
-                "version": "1.0.0",
+                "version": __version__,
                 "environment": cfg.environment,
                 "cas_backend": cfg.cas_backend,
                 "catalog_backend": cfg.catalog_backend,
