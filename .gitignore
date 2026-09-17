@@ -88,4 +88,6 @@ yarn-debug.log*
 # Export Artifacts
 dcc_exports/
 unreal_plugin/
+tmp/
+
 
