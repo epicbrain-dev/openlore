@@ -99,8 +99,27 @@ if ($ScriptDir -and (Test-Path "$ScriptDir\installer.py")) {
     New-Item -ItemType Directory -Path $TempDir -Force | Out-Null
     $InstallerFile = Join-Path $TempDir "installer.py"
     Write-Host "  • Downloading installer manifest..." -ForegroundColor Cyan
-    Invoke-WebRequest -Uri "https://raw.githubusercontent.com/epicbrain-dev/openlore/main/installer.py" -OutFile $InstallerFile -UseBasicParsing
-}
+    $ManifestUrls = @(
+        "https://raw.githubusercontent.com/epicbrain-dev/openlore/main/installer.py",
+        "https://github.com/epicbrain-dev/openlore/raw/main/installer.py"
+    )
+    $Downloaded = $false
+    foreach ($url in $ManifestUrls) {
+        try {
+            Invoke-WebRequest -Uri $url -OutFile $InstallerFile -UseBasicParsing -ErrorAction Stop
+            $Downloaded = $true
+            break
+        } catch {
+            # Try next fallback URL
+        }
+    }
+    if (-not $Downloaded) {
+        Write-Host "`n❌ Failed to download installer.py from GitHub repository." -ForegroundColor Red
+        Write-Host "Please verify your internet connection or download it directly:" -ForegroundColor Yellow
+        Write-Host "  irm https://raw.githubusercontent.com/epicbrain-dev/openlore/main/installer.py -OutFile installer.py" -ForegroundColor Cyan
+        Write-Host "  python installer.py -Yes`n" -ForegroundColor Cyan
+        exit 1
+    }
 
 # 3. Assemble arguments
 $pyArgs = @($InstallerFile)

@@ -140,20 +140,26 @@ OpenLore acts as the central production backbone, unifying OpenUSD scene graph m
 ### Option 0: Turnkey 1-Line Cross-Platform Installer (Recommended)
 Installs OpenLore in an isolated virtual environment (`~/.openlore`), configures launcher shims, deploys Web Cockpit assets, and sets up your system `PATH`:
 
-**macOS / Linux:**
+**macOS / Linux (1-Line):**
 ```bash
 curl -fsSL https://raw.githubusercontent.com/epicbrain-dev/openlore/main/install.sh | bash
 ```
 
-**Windows (PowerShell 5.1+ / 7+):**
+**Windows (PowerShell 5.1+ / 7+ 1-Line):**
 ```powershell
 irm https://raw.githubusercontent.com/epicbrain-dev/openlore/main/install.ps1 | iex
 ```
 
-**Universal Python Installer:**
+**Direct Python Installer Download (`installer.py`):**
 ```bash
+# macOS / Linux / WSL:
+curl -fsSL -O https://raw.githubusercontent.com/epicbrain-dev/openlore/main/installer.py
 python3 installer.py --yes
 ```
+
+*(Windows: `irm https://raw.githubusercontent.com/epicbrain-dev/openlore/main/installer.py -OutFile installer.py; python installer.py -Yes`)*
+
+*Direct link: [installer.py](https://raw.githubusercontent.com/epicbrain-dev/openlore/main/installer.py)*
 
 ### Option A: Immediate Repository Usage (Zero-Install)
 From the root of the cloned repository:

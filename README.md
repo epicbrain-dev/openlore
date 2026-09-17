@@ -135,20 +135,29 @@ Modern entertainment franchises span feature films, AAA games, television series
 
 Install OpenLore automatically with an isolated runtime, pre-configured launcher shims, web cockpit assets, and shell PATH integration:
 
-**macOS & Linux:**
+**macOS & Linux (1-Line):**
 ```bash
 curl -fsSL https://raw.githubusercontent.com/epicbrain-dev/openlore/main/install.sh | bash
 ```
 
-**Windows (PowerShell 5.1+ / 7+):**
+**Windows (PowerShell 5.1+ / 7+ 1-Line):**
 ```powershell
 irm https://raw.githubusercontent.com/epicbrain-dev/openlore/main/install.ps1 | iex
 ```
 
-**Universal Python (Any Platform):**
+**Direct Python Installer Download (`installer.py`):**
+To download and run the standalone turnkey installer directly from GitHub:
 ```bash
+# Download installer.py from GitHub
+curl -fsSL -O https://raw.githubusercontent.com/epicbrain-dev/openlore/main/installer.py
+
+# Run installer
 python3 installer.py --yes
 ```
+
+*(On Windows PowerShell: `irm https://raw.githubusercontent.com/epicbrain-dev/openlore/main/installer.py -OutFile installer.py; python installer.py -Yes`)*
+
+*Direct link: [installer.py](https://raw.githubusercontent.com/epicbrain-dev/openlore/main/installer.py)*
 
 > **Options & DCC Integration**: Pass `--with-dcc all` to export Blender, Maya, Houdini, Unreal, and Unity sidecars automatically, or `--launch-web` to open the Web Studio immediately upon install. Run `openlore doctor` anytime to verify environment health.
 

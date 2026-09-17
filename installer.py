@@ -243,12 +243,13 @@ class OpenLoreInstaller:
                 # Install from current repository
                 cmd = [str(env_python), "-m", "pip", "install", "-e", str(self.repo_root)]
             else:
-                # Standalone mode: install from PyPI or local wheel
+                # Standalone mode: install from local wheel, official GitHub release wheel, or git repository
                 dist_wheels = list(self.repo_root.glob("dist/*.whl")) if self.repo_root.exists() else []
                 if dist_wheels:
                     cmd = [str(env_python), "-m", "pip", "install", str(dist_wheels[0])]
                 else:
-                    cmd = [str(env_python), "-m", "pip", "install", "openlore"]
+                    release_wheel = "https://github.com/epicbrain-dev/openlore/releases/download/v1.5.0/openlore-1.5.0-py3-none-any.whl"
+                    cmd = [str(env_python), "-m", "pip", "install", release_wheel]
 
             res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
             if res.returncode != 0:

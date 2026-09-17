@@ -94,16 +94,31 @@ else
     CLEANUP_TEMP=1
     
     echo -e "  • Fetching installer manifest..."
-    if command -v curl >/dev/null 2>&1; then
-        curl -fsSL "https://raw.githubusercontent.com/epicbrain-dev/openlore/main/installer.py" -o "$INSTALLER_FILE" || {
-            echo -e "${RED}Failed to download installer.py${NC}"
-            exit 1
-        }
-    elif command -v wget >/dev/null 2>&1; then
-        wget -qO "$INSTALLER_FILE" "https://raw.githubusercontent.com/epicbrain-dev/openlore/main/installer.py" || {
-            echo -e "${RED}Failed to download installer.py${NC}"
-            exit 1
-        }
+    MANIFEST_URLS=(
+        "https://raw.githubusercontent.com/epicbrain-dev/openlore/main/installer.py"
+        "https://github.com/epicbrain-dev/openlore/raw/main/installer.py"
+    )
+    DOWNLOAD_SUCCESS=0
+    for url in "${MANIFEST_URLS[@]}"; do
+        if command -v curl >/dev/null 2>&1; then
+            if curl -fsSL "$url" -o "$INSTALLER_FILE" 2>/dev/null; then
+                DOWNLOAD_SUCCESS=1
+                break
+            fi
+        elif command -v wget >/dev/null 2>&1; then
+            if wget -qO "$INSTALLER_FILE" "$url" 2>/dev/null; then
+                DOWNLOAD_SUCCESS=1
+                break
+            fi
+        fi
+    done
+
+    if [ "$DOWNLOAD_SUCCESS" -ne 1 ]; then
+        echo -e "${RED}❌ Failed to download installer.py from GitHub repository.${NC}"
+        echo -e "You can download and run the installer directly using:"
+        echo -e "  ${CYAN}curl -fsSL -O https://raw.githubusercontent.com/epicbrain-dev/openlore/main/installer.py${NC}"
+        echo -e "  ${CYAN}$FOUND_PYTHON installer.py --yes${NC}\n"
+        exit 1
     fi
 fi
 
