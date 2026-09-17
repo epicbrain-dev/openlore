@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+import tempfile
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import List, Optional
@@ -26,9 +27,7 @@ class InboundLintResult:
 
 
 class PreFlightUSDValidator:
-    """Quarantine validator checking hierarchy, polycount ceilings, and naming rules."""
-
-    PRIM_NAME_REGEX = re.compile(r"^[A-Za-z0-9_]+$")
+    """Quarantine validator enforcing topology budgets and naming rules before stage promotion."""
 
     def __init__(
         self,
@@ -43,7 +42,18 @@ class PreFlightUSDValidator:
 
     def validate_deliverable(self, stage_path: Path) -> InboundLintResult:
         """Run linting checks inside an air-gapped quarantine sandbox."""
-        path = Path(stage_path)
+        resolved = Path(stage_path).resolve()
+        safe_roots = [
+            str(Path.cwd().resolve()),
+            str(Path(tempfile.gettempdir()).resolve()),
+        ]
+        if not any(str(resolved).startswith(root) for root in safe_roots):
+            return InboundLintResult(
+                passed=False,
+                hierarchy_errors=[f"Deliverable stage path is outside allowed sandbox bounds: {stage_path}"],
+            )
+
+        path = resolved
         if not path.is_file():
             return InboundLintResult(
                 passed=False,

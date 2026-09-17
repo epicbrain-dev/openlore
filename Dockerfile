@@ -54,6 +54,6 @@ ENV PYTHONUNBUFFERED=1 \
 EXPOSE 8000 11111/udp 11112/udp
 
 HEALTHCHECK --interval=20s --timeout=5s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:8000/api/status || exit 1
+    CMD curl -f http://localhost:8000/health || exit 1
 
 ENTRYPOINT ["openlore", "web", "--host", "0.0.0.0", "--port", "8000", "--static-dir", "/app/web/dist"]

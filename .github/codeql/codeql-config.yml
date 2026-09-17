@@ -1,0 +1,7 @@
+# CodeQL configuration file for OpenLore
+# Configures analysis filters and path exclusions
+
+paths-ignore:
+  - 'web/dist/**'
+  - 'dist/**'
+  - '**/vendor/**'

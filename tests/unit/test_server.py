@@ -116,6 +116,12 @@ class TestOpenLoreAPIServer(unittest.TestCase):
         self.assertIn("continuity_status", res)
         self.assertIn(res["continuity_status"], ["CANON_VALID", "CONTRADICTION_DETECTED"])
 
+    def test_health_probes(self) -> None:
+        for probe_path in ("/health", "/api/health"):
+            data = self._get_json(probe_path)
+            self.assertEqual(data["status"], "UP")
+            self.assertEqual(data["version"], "1.0.0")
+
     def test_not_found_endpoint(self) -> None:
         url = f"{self.base_url}/api/nonexistent_route"
         try:

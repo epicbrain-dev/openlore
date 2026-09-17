@@ -12,6 +12,8 @@ services:
       - "11112:11112/udp"
     environment:
       - OPENLORE_AUTH_ENABLED=true
+      - OPENLORE_AUTH_SECRET=${OPENLORE_AUTH_SECRET:-openlore-enterprise-master-key-2026}
+      - OPENLORE_SIGNING_KEY=${OPENLORE_SIGNING_KEY:-openlore-studio-master-signing-key-2026}
       - OPENLORE_CAS_ROOT=/app/data/cas
       - OPENLORE_KAFKA_SERVERS=kafka:29092
       - OPENLORE_OPA_URL=http://opa:8181/v1/data/openlore/royalties
@@ -27,7 +29,7 @@ services:
       - triplestore
       - temporal
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/api/status"]
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 15s
       timeout: 5s
       retries: 3

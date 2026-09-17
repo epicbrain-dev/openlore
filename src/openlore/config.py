@@ -67,6 +67,9 @@ class OpenLoreConfig:
     auth_secret: str = field(
         default_factory=lambda: os.getenv("OPENLORE_AUTH_SECRET", "openlore-enterprise-master-key-2026")
     )
+    signing_key: str = field(
+        default_factory=lambda: os.getenv("OPENLORE_SIGNING_KEY", "openlore-studio-master-signing-key-2026")
+    )
 
     # 5. Narrative & Enclave
     default_timeline: str = "prime-canon"

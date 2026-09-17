@@ -12,7 +12,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Dict, List, Optional, Set, Tuple
 
-DEFAULT_SECRET_KEY = os.getenv("OPENLORE_AUTH_SECRET", "openlore-studio-master-hmac-secret-2026")
+DEFAULT_SECRET_KEY = os.getenv("OPENLORE_AUTH_SECRET", "openlore-enterprise-master-key-2026")
 AUTH_ENABLED = os.getenv("OPENLORE_AUTH_ENABLED", "false").lower() in ("true", "1", "yes")
 
 

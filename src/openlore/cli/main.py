@@ -372,7 +372,8 @@ def main(args: Sequence[str] | None = None) -> int:
         stage_mgr = StageCompositionManager(Path("./stages"))
         stage_ref = stage_mgr.load_stage(parsed_args.stage)
         harvester = StageDAGHarvester(stage_ref.usd_stage)
-        manifest = harvester.create_manifest(stage_uri=parsed_args.stage, secret_key="openlore-export-key")
+        export_key = os.getenv("OPENLORE_EXPORT_KEY", "openlore-export-key")
+        manifest = harvester.create_manifest(stage_uri=parsed_args.stage, secret_key=export_key)
 
         accounting = RoyaltyAccountingEngine()
         allow_export, unlicensed = accounting.evaluate_export_allowance(manifest)

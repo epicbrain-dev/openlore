@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import tempfile
 import uuid
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
@@ -133,19 +134,32 @@ class WorkerGridDispatcher:
         )
         self.jobs[workflow_id] = job
 
+        safe_roots = [
+            str(Path.cwd().resolve()),
+            str(Path(tempfile.gettempdir()).resolve()),
+        ]
+        stage_path_obj: Optional[Path] = None
+        if stage_path:
+            stage_path_obj = Path(stage_path).resolve()
+            if not any(str(stage_path_obj).startswith(root) for root in safe_roots):
+                raise ValueError(f"Forbidden: Stage path is outside allowed boundaries: {stage_path}")
+
+        out_dir = Path(output_dir).resolve() if output_dir else (Path.cwd() / "builds" / workflow_id).resolve()
+        if not any(str(out_dir).startswith(root) for root in safe_roots):
+            raise ValueError(f"Forbidden: Output directory is outside allowed boundaries: {out_dir}")
+
         try:
             # 1. Activity: ValidateStage
             job.activities["validate_stage"] = {
                 "status": "RUNNING",
                 "started_at": datetime.now(timezone.utc).isoformat(),
             }
-            if stage_path and not Path(stage_path).is_file():
+            if stage_path_obj and not stage_path_obj.is_file():
                 raise FileNotFoundError(f"OpenUSD stage not found at: {stage_path}")
 
             job.activities["validate_stage"]["status"] = "COMPLETED"
             job.activities["validate_stage"]["completed_at"] = datetime.now(timezone.utc).isoformat()
 
-            out_dir = Path(output_dir) if output_dir else Path(f"./builds/{workflow_id}")
             out_dir.mkdir(parents=True, exist_ok=True)
 
             # 2. Activity: Target Engine Compilation / Baking
@@ -158,9 +172,11 @@ class WorkerGridDispatcher:
                         "status": "RUNNING",
                         "started_at": datetime.now(timezone.utc).isoformat(),
                     }
-                    if stage_path:
+                    if stage_path_obj:
                         compiler = EnginePackageCompiler(target_engine=target_norm)
-                        pkg_file = compiler.compile_package(Path(stage_path), out_dir)
+                        pkg_file = compiler.compile_package(stage_path_obj, out_dir).resolve()
+                        if not any(str(pkg_file).startswith(root) for root in safe_roots):
+                            raise ValueError(f"Forbidden: Package file is outside allowed boundaries: {pkg_file}")
                         pkg_bytes = pkg_file.read_bytes()
                         pkg_hash = blake3.blake3(pkg_bytes).hexdigest()
 
@@ -182,15 +198,17 @@ class WorkerGridDispatcher:
                         "status": "RUNNING",
                         "started_at": datetime.now(timezone.utc).isoformat(),
                     }
-                    if stage_path:
+                    if stage_path_obj:
                         baker = OfflineShotBaker()
                         cache_file = baker.bake_cache(
-                            usd_stage_path=Path(stage_path),
+                            usd_stage_path=stage_path_obj,
                             start_frame=1,
                             end_frame=24,
                             output_dir=out_dir,
                             shot_name=shot_name,
-                        )
+                        ).resolve()
+                        if not any(str(cache_file).startswith(root) for root in safe_roots):
+                            raise ValueError(f"Forbidden: Cache file is outside allowed boundaries: {cache_file}")
                         cache_bytes = cache_file.read_bytes()
                         cache_hash = blake3.blake3(cache_bytes).hexdigest()
 

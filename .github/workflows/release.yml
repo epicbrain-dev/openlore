@@ -51,6 +51,7 @@ jobs:
             dist/openlore-maya-*.zip
             dist/openlore-houdini-*.zip
             dist/openlore-unreal-*.zip
+            dist/openlore-unity-*.zip
             dist/SHA256SUMS.txt
           generate_release_notes: true
           draft: false

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import socket
 import threading
 import time
@@ -21,11 +22,11 @@ class LiveLinkStreamReceiver:
 
     def __init__(
         self,
-        bind_host: str = "0.0.0.0",
+        bind_host: Optional[str] = None,
         port: int = 11112,
         buffer_size: int = 65535,
     ) -> None:
-        self.bind_host = bind_host
+        self.bind_host = bind_host or os.getenv("OPENLORE_LIVELINK_HOST", "127.0.0.1")
         self.port = port
         self.buffer_size = buffer_size
 

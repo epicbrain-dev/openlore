@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import math
+import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List
@@ -32,8 +33,18 @@ class OfflineShotBaker:
         shot_name: str = "shot_01",
     ) -> Path:
         """Bake deterministic shot geometry caches for offline cinematic renderers."""
-        stage_path = Path(usd_stage_path)
-        out_dir = Path(output_dir)
+        stage_path = Path(usd_stage_path).resolve()
+        out_dir = Path(output_dir).resolve()
+
+        safe_roots = [
+            str(Path.cwd().resolve()),
+            str(Path(tempfile.gettempdir()).resolve()),
+        ]
+        if not any(str(stage_path).startswith(root) for root in safe_roots):
+            raise ValueError(f"Forbidden: Source OpenUSD stage not found or outside allowed boundaries: {stage_path}")
+        if not any(str(out_dir).startswith(root) for root in safe_roots):
+            raise ValueError(f"Forbidden: Output directory is outside allowed boundaries: {out_dir}")
+
         out_dir.mkdir(parents=True, exist_ok=True)
 
         if not stage_path.is_file():
@@ -119,11 +130,16 @@ class OfflineShotBaker:
             bake_stage.GetRootLayer().Save()
 
         # Calculate cache cryptographic BLAKE3 hash
+        cache_path = cache_path.resolve()
+        if not any(str(cache_path).startswith(root) for root in safe_roots):
+            raise ValueError(f"Forbidden: Cache path outside allowed boundaries: {cache_path}")
         cache_bytes = cache_path.read_bytes()
         cache_hash = blake3.blake3(cache_bytes).hexdigest()
 
         # Write cache manifest
-        manifest_file = out_dir / f"{shot_name}_cache_manifest.json"
+        manifest_file = (out_dir / f"{shot_name}_cache_manifest.json").resolve()
+        if not any(str(manifest_file).startswith(root) for root in safe_roots):
+            raise ValueError(f"Forbidden: Manifest path outside allowed boundaries: {manifest_file}")
         manifest_data = {
             "shot_name": shot_name,
             "start_frame": start_frame,

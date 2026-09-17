@@ -37,8 +37,9 @@ export default function CompilationGridView() {
   ]);
 
   const handleDispatch = async () => {
+    const workflowId = window.crypto?.randomUUID ? window.crypto.randomUUID().slice(0, 8) : Date.now().toString(36);
     setActiveWorkflow({
-      id: `workflow-${Math.random().toString(16).slice(2, 10)}`,
+      id: `workflow-${workflowId}`,
       status: 'RUNNING',
       stage: 'openlore://stages/hero_scene.usda',
       steps: [
@@ -74,7 +75,8 @@ export default function CompilationGridView() {
         steps: prev.steps.map((s) => ({ ...s, status: 'COMPLETED' })),
       }));
 
-      const newId = `cat-${Math.random().toString(16).slice(2, 10)}`;
+      const catId = window.crypto?.randomUUID ? window.crypto.randomUUID().slice(0, 8) : Date.now().toString(36);
+      const newId = `cat-${catId}`;
       setCatalogBuilds((prev) => [
         {
           id: newId,

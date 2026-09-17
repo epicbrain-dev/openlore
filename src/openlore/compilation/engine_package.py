@@ -38,8 +38,18 @@ class EnginePackageCompiler:
         package_name: Optional[str] = None,
     ) -> Path:
         """Execute packaging pipeline for the designated real-time engine."""
-        stage_path = Path(usd_stage_path)
-        out_dir = Path(output_dir)
+        stage_path = Path(usd_stage_path).resolve()
+        out_dir = Path(output_dir).resolve()
+
+        safe_roots = [
+            str(Path.cwd().resolve()),
+            str(Path(tempfile.gettempdir()).resolve()),
+        ]
+        if not any(str(stage_path).startswith(root) for root in safe_roots):
+            raise ValueError(f"Forbidden: OpenUSD stage path is outside allowed boundaries: {stage_path}")
+        if not any(str(out_dir).startswith(root) for root in safe_roots):
+            raise ValueError(f"Forbidden: Output directory is outside allowed boundaries: {out_dir}")
+
         out_dir.mkdir(parents=True, exist_ok=True)
 
         if not stage_path.is_file():
@@ -192,11 +202,16 @@ class EnginePackageCompiler:
                         zf.write(file_path, arcname=str(arcname))
 
         # Calculate package cryptographic hash
+        package_path = package_path.resolve()
+        if not any(str(package_path).startswith(root) for root in safe_roots):
+            raise ValueError(f"Forbidden: Package path outside allowed boundaries: {package_path}")
         package_bytes = package_path.read_bytes()
         pkg_hash = blake3.blake3(package_bytes).hexdigest()
 
         # Write metadata manifest alongside package
-        manifest_file = out_dir / f"{package_path.stem}_manifest.json"
+        manifest_file = (out_dir / f"{package_path.stem}_manifest.json").resolve()
+        if not any(str(manifest_file).startswith(root) for root in safe_roots):
+            raise ValueError(f"Forbidden: Manifest path outside allowed boundaries: {manifest_file}")
         manifest_meta = {
             "package_file": package_path.name,
             "package_hash": pkg_hash,

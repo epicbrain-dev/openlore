@@ -5,7 +5,9 @@ from __future__ import annotations
 import json
 import mimetypes
 import os
+import signal
 import socket
+import tempfile
 import threading
 import time
 import urllib.parse
@@ -152,6 +154,11 @@ class OpenLoreAPIHandler(BaseHTTPRequestHandler):
                 ws_manager.unregister(client)
             return
 
+        # Healthcheck liveness & readiness probe (exempt from authentication)
+        if path in ("/health", "/api/health"):
+            self._send_json({"status": "UP", "version": "1.0.0"})
+            return
+
         # Security Authentication Check for protected REST API routes
         if path.startswith("/api/"):
             auth_ok, token, auth_err = authenticate_request(dict(self.headers), query_dict)
@@ -268,7 +275,16 @@ class OpenLoreAPIHandler(BaseHTTPRequestHandler):
         elif path == "/api/provenance":
             query_params = urllib.parse.parse_qs(parsed_url.query)
             stage_param = query_params.get("stage", ["./stages/hero_scene.usda"])[0]
-            stage_path = Path(stage_param)
+
+            # Security: Sanitize stage path against allowed directory
+            clean_param = os.path.basename(stage_param) if (".." in stage_param or "/" in stage_param) else stage_param
+            allowed_base = str(self.stage_dir.resolve())
+            candidate_path = (self.stage_dir / clean_param).resolve()
+            if not str(candidate_path).startswith(allowed_base):
+                self._send_error("Forbidden: Path traversal detected in stage parameter", HTTPStatus.FORBIDDEN)
+                return
+
+            stage_path = candidate_path
             if not stage_path.is_file():
                 stage_files = list(self.stage_dir.glob("*.usd*"))
                 if stage_files:
@@ -278,7 +294,8 @@ class OpenLoreAPIHandler(BaseHTTPRequestHandler):
                 from pxr import Usd
                 usd_stage = Usd.Stage.Open(str(stage_path))
                 harvester = StageDAGHarvester(usd_stage)
-                manifest = harvester.create_manifest(f"openlore://stages/{stage_path.name}", "studio-secret-key")
+                sig_key = get_config().signing_key
+                manifest = harvester.create_manifest(f"openlore://stages/{stage_path.name}", sig_key)
                 accounting = RoyaltyAccountingEngine()
                 allow_export, unlicensed = accounting.evaluate_export_allowance(manifest)
                 splits = accounting.calculate_royalty_splits(manifest)
@@ -287,7 +304,7 @@ class OpenLoreAPIHandler(BaseHTTPRequestHandler):
                     "stage_uri": manifest.stage_uri,
                     "total_assets": manifest.total_assets,
                     "digital_signature": manifest.digital_signature,
-                    "signature_verified": manifest.verify_signature("studio-secret-key"),
+                    "signature_verified": manifest.verify_signature(sig_key),
                     "allow_export": allow_export,
                     "unlicensed_prims": unlicensed,
                     "royalty_splits": splits,
@@ -429,7 +446,22 @@ class OpenLoreAPIHandler(BaseHTTPRequestHandler):
 
         # 4. Inbound Quarantine Linting
         elif path == "/api/partner/lint":
-            deliv_path = Path(body.get("deliverable_path", ""))
+            deliv_raw = body.get("deliverable_path", "")
+            if not deliv_raw:
+                self._send_error("Missing deliverable_path parameter")
+                return
+
+            safe_roots = [
+                str(Path.cwd().resolve()),
+                str(Path(tempfile.gettempdir()).resolve()),
+                str(self.stage_dir.resolve()),
+                str(self.builds_dir.resolve()),
+            ]
+            deliv_path = Path(deliv_raw).resolve()
+            if not any(str(deliv_path).startswith(root) for root in safe_roots):
+                self._send_error("Forbidden: Path traversal detected in deliverable_path", HTTPStatus.FORBIDDEN)
+                return
+
             max_poly = int(body.get("max_polycount", 500000))
             if not deliv_path.is_file():
                 self._send_error(f"Deliverable file not found: {deliv_path}")
@@ -448,9 +480,24 @@ class OpenLoreAPIHandler(BaseHTTPRequestHandler):
         # 5. TD One-Click Promotion
         elif path == "/api/partner/promote":
             stage_uri = body.get("stage_uri", "openlore://stages/main.usda")
-            deliv_path = Path(body.get("deliverable_path", ""))
-            prod_path = Path(body.get("production_stage_path", ""))
+            deliv_raw = body.get("deliverable_path", "")
+            prod_raw = body.get("production_stage_path", "")
             td_user = body.get("td_user", "lead_td")
+
+            safe_roots = [
+                str(Path.cwd().resolve()),
+                str(Path(tempfile.gettempdir()).resolve()),
+                str(self.stage_dir.resolve()),
+                str(self.builds_dir.resolve()),
+            ]
+            deliv_path = Path(deliv_raw).resolve()
+            prod_path = Path(prod_raw).resolve()
+            if not any(str(deliv_path).startswith(root) for root in safe_roots):
+                self._send_error("Forbidden: Path traversal detected in deliverable_path", HTTPStatus.FORBIDDEN)
+                return
+            if not any(str(prod_path).startswith(root) for root in safe_roots):
+                self._send_error("Forbidden: Path traversal detected in production_stage_path", HTTPStatus.FORBIDDEN)
+                return
 
             linter = PreFlightUSDValidator()
             lint_res = linter.validate_deliverable(deliv_path)
@@ -480,7 +527,19 @@ class OpenLoreAPIHandler(BaseHTTPRequestHandler):
         elif path == "/api/compile":
             stage_uri = body.get("stage_uri", "openlore://stages/hero_scene.usda")
             stage_path_str = body.get("stage_path", "")
-            stage_path = Path(stage_path_str) if stage_path_str else None
+            safe_roots = [
+                str(Path.cwd().resolve()),
+                str(Path(tempfile.gettempdir()).resolve()),
+                str(self.stage_dir.resolve()),
+                str(self.builds_dir.resolve()),
+            ]
+            if stage_path_str:
+                stage_path = Path(stage_path_str).resolve()
+                if not any(str(stage_path).startswith(root) for root in safe_roots):
+                    self._send_error("Forbidden: Path traversal detected in stage_path", HTTPStatus.FORBIDDEN)
+                    return
+            else:
+                stage_path = None
             targets = body.get("targets", ["unreal", "unity", "cinematic-cache"])
             out_dir = self.builds_dir
 
@@ -538,7 +597,7 @@ _udp_bridge_started = False
 _udp_bridge_lock = threading.Lock()
 
 
-def start_udp_livelink_listener(port: int = 11111) -> None:
+def start_udp_livelink_listener(port: int = 11111, host: Optional[str] = None) -> None:
     """Start background UDP listener translating Live Link frames from DCCs to WebSockets."""
     global _udp_bridge_started
     with _udp_bridge_lock:
@@ -546,11 +605,13 @@ def start_udp_livelink_listener(port: int = 11111) -> None:
             return
         _udp_bridge_started = True
 
+    listen_host = host or os.getenv("OPENLORE_LIVELINK_HOST", "127.0.0.1")
+
     def _listen() -> None:
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         try:
             sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            sock.bind(("0.0.0.0", port))
+            sock.bind((listen_host, port))
             sock.settimeout(1.0)
             while True:
                 try:
@@ -589,7 +650,7 @@ def run_server(
     host: str = "127.0.0.1",
     static_dir: Optional[Path] = None,
 ) -> None:
-    """Launch the multi-threaded OpenLore REST API server."""
+    """Launch the multi-threaded OpenLore REST API server with graceful signal termination."""
     start_udp_livelink_listener(int(os.getenv("OPENLORE_LIVELINK_PORT", "11111")))
     OpenLoreAPIHandler.static_dir = static_dir
     server_address = (host, port)
@@ -597,8 +658,26 @@ def run_server(
     print(f"[OpenLore Web Server] Running at http://{host}:{port}/")
     if static_dir:
         print(f"[OpenLore Web Server] Serving static files from: {static_dir.resolve()}")
+
+    shutdown_event = threading.Event()
+
+    def _handle_signal(signum: int, _frame: Any) -> None:
+        sig_name = "SIGTERM" if signum == signal.SIGTERM else "SIGINT"
+        print(f"\n[OpenLore Web Server] Received {sig_name}. Shutting down gracefully...")
+        if not shutdown_event.is_set():
+            shutdown_event.set()
+            threading.Thread(target=httpd.shutdown, daemon=True).start()
+
+    try:
+        signal.signal(signal.SIGTERM, _handle_signal)
+        signal.signal(signal.SIGINT, _handle_signal)
+    except (ValueError, AttributeError):
+        pass
+
     try:
         httpd.serve_forever()
     except KeyboardInterrupt:
-        print("\n[OpenLore Web Server] Shutting down...")
+        pass
+    finally:
         httpd.server_close()
+        print("[OpenLore Web Server] Server stopped cleanly.")
