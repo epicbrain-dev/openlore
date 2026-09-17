@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import tempfile
 import uuid
 from dataclasses import asdict, dataclass, field
@@ -135,18 +136,36 @@ class WorkerGridDispatcher:
         self.jobs[workflow_id] = job
 
         safe_roots = [
-            str(Path.cwd().resolve()),
-            str(Path(tempfile.gettempdir()).resolve()),
+            os.path.realpath(os.path.abspath(str(Path.cwd()))),
+            os.path.realpath(os.path.abspath(tempfile.gettempdir())),
         ]
         stage_path_obj: Optional[Path] = None
         if stage_path:
-            stage_path_obj = Path(stage_path).resolve()
-            if not any(str(stage_path_obj).startswith(root) for root in safe_roots):
+            norm_stage = os.path.realpath(os.path.abspath(str(stage_path).strip()))
+            for root in safe_roots:
+                root_prefix = root if root.endswith(os.sep) else (root + os.sep)
+                if norm_stage.startswith(root_prefix):
+                    stage_path_obj = Path(norm_stage)
+                    break
+                if norm_stage == root:
+                    stage_path_obj = Path(root)
+                    break
+            if stage_path_obj is None:
                 raise ValueError(f"Forbidden: Stage path is outside allowed boundaries: {stage_path}")
 
-        out_dir = Path(output_dir).resolve() if output_dir else (Path.cwd() / "builds" / workflow_id).resolve()
-        if not any(str(out_dir).startswith(root) for root in safe_roots):
-            raise ValueError(f"Forbidden: Output directory is outside allowed boundaries: {out_dir}")
+        raw_out = output_dir if output_dir else (Path.cwd() / "builds" / workflow_id)
+        norm_out = os.path.realpath(os.path.abspath(str(raw_out).strip()))
+        out_dir: Optional[Path] = None
+        for root in safe_roots:
+            root_prefix = root if root.endswith(os.sep) else (root + os.sep)
+            if norm_out.startswith(root_prefix):
+                out_dir = Path(norm_out)
+                break
+            if norm_out == root:
+                out_dir = Path(root)
+                break
+        if out_dir is None:
+            raise ValueError(f"Forbidden: Output directory is outside allowed boundaries: {output_dir}")
 
         try:
             # 1. Activity: ValidateStage
@@ -174,9 +193,19 @@ class WorkerGridDispatcher:
                     }
                     if stage_path_obj:
                         compiler = EnginePackageCompiler(target_engine=target_norm)
-                        pkg_file = compiler.compile_package(stage_path_obj, out_dir).resolve()
-                        if not any(str(pkg_file).startswith(root) for root in safe_roots):
-                            raise ValueError(f"Forbidden: Package file is outside allowed boundaries: {pkg_file}")
+                        pkg_raw = compiler.compile_package(stage_path_obj, out_dir)
+                        norm_pkg = os.path.realpath(os.path.abspath(str(pkg_raw).strip()))
+                        pkg_file: Optional[Path] = None
+                        for root in safe_roots:
+                            root_prefix = root if root.endswith(os.sep) else (root + os.sep)
+                            if norm_pkg.startswith(root_prefix):
+                                pkg_file = Path(norm_pkg)
+                                break
+                            if norm_pkg == root:
+                                pkg_file = Path(root)
+                                break
+                        if pkg_file is None:
+                            raise ValueError(f"Forbidden: Package file is outside allowed boundaries: {pkg_raw}")
                         pkg_bytes = pkg_file.read_bytes()
                         pkg_hash = blake3.blake3(pkg_bytes).hexdigest()
 
@@ -200,15 +229,25 @@ class WorkerGridDispatcher:
                     }
                     if stage_path_obj:
                         baker = OfflineShotBaker()
-                        cache_file = baker.bake_cache(
+                        cache_raw = baker.bake_cache(
                             usd_stage_path=stage_path_obj,
                             start_frame=1,
                             end_frame=24,
                             output_dir=out_dir,
                             shot_name=shot_name,
-                        ).resolve()
-                        if not any(str(cache_file).startswith(root) for root in safe_roots):
-                            raise ValueError(f"Forbidden: Cache file is outside allowed boundaries: {cache_file}")
+                        )
+                        norm_cache = os.path.realpath(os.path.abspath(str(cache_raw).strip()))
+                        cache_file: Optional[Path] = None
+                        for root in safe_roots:
+                            root_prefix = root if root.endswith(os.sep) else (root + os.sep)
+                            if norm_cache.startswith(root_prefix):
+                                cache_file = Path(norm_cache)
+                                break
+                            if norm_cache == root:
+                                cache_file = Path(root)
+                                break
+                        if cache_file is None:
+                            raise ValueError(f"Forbidden: Cache file is outside allowed boundaries: {cache_raw}")
                         cache_bytes = cache_file.read_bytes()
                         cache_hash = blake3.blake3(cache_bytes).hexdigest()
 

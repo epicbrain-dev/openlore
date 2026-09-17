@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import re
 import tempfile
 from dataclasses import dataclass, field
@@ -42,18 +43,29 @@ class PreFlightUSDValidator:
 
     def validate_deliverable(self, stage_path: Path) -> InboundLintResult:
         """Run linting checks inside an air-gapped quarantine sandbox."""
-        resolved = Path(stage_path).resolve()
+        stage_str = str(stage_path).strip()
         safe_roots = [
-            str(Path.cwd().resolve()),
-            str(Path(tempfile.gettempdir()).resolve()),
+            os.path.realpath(os.path.abspath(str(Path.cwd()))),
+            os.path.realpath(os.path.abspath(tempfile.gettempdir())),
         ]
-        if not any(str(resolved).startswith(root) for root in safe_roots):
+        norm_stage = os.path.realpath(os.path.abspath(stage_str))
+        valid_path: Optional[Path] = None
+        for root in safe_roots:
+            root_prefix = root if root.endswith(os.sep) else (root + os.sep)
+            if norm_stage.startswith(root_prefix):
+                valid_path = Path(norm_stage)
+                break
+            if norm_stage == root:
+                valid_path = Path(root)
+                break
+
+        if valid_path is None:
             return InboundLintResult(
                 passed=False,
                 hierarchy_errors=[f"Deliverable stage path is outside allowed sandbox bounds: {stage_path}"],
             )
 
-        path = resolved
+        path = valid_path
         if not path.is_file():
             return InboundLintResult(
                 passed=False,

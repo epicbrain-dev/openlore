@@ -131,6 +131,53 @@ class TestOpenLoreAPIServer(unittest.TestCase):
         except urllib.error.HTTPError as err:
             self.assertEqual(err.code, 404)
 
+    def test_partner_lint_path_traversal_rejected(self) -> None:
+        url = f"{self.base_url}/api/partner/lint"
+        data = json.dumps({"deliverable_path": "../../../../../etc/passwd"}).encode("utf-8")
+        req = urllib.request.Request(url, data=data, headers={"Content-Type": "application/json"})
+        try:
+            urllib.request.urlopen(req)
+            self.fail("Expected HTTP 403 Forbidden on path traversal attempt")
+        except urllib.error.HTTPError as err:
+            self.assertEqual(err.code, 403)
+
+    def test_partner_promote_path_traversal_rejected(self) -> None:
+        url = f"{self.base_url}/api/partner/promote"
+        data = json.dumps({
+            "stage_uri": "openlore://stages/main.usda",
+            "deliverable_path": "../../../../../etc/passwd",
+            "production_stage_path": "./stages/main.usda",
+        }).encode("utf-8")
+        req = urllib.request.Request(url, data=data, headers={"Content-Type": "application/json"})
+        try:
+            urllib.request.urlopen(req)
+            self.fail("Expected HTTP 403 Forbidden on path traversal attempt")
+        except urllib.error.HTTPError as err:
+            self.assertEqual(err.code, 403)
+
+    def test_compile_path_traversal_rejected(self) -> None:
+        url = f"{self.base_url}/api/compile"
+        data = json.dumps({
+            "stage_uri": "openlore://stages/hero_scene.usda",
+            "stage_path": "/etc/shadow",
+        }).encode("utf-8")
+        req = urllib.request.Request(url, data=data, headers={"Content-Type": "application/json"})
+        try:
+            urllib.request.urlopen(req)
+            self.fail("Expected HTTP 403 Forbidden on path traversal attempt")
+        except urllib.error.HTTPError as err:
+            self.assertEqual(err.code, 403)
+
+    def test_provenance_path_traversal_rejected(self) -> None:
+        # Traversal in stage parameter must either reject or safely sanitize without escaping stage_dir
+        url = f"{self.base_url}/api/provenance?stage=../../../../etc/passwd"
+        req = urllib.request.Request(url)
+        try:
+            with urllib.request.urlopen(req) as resp:
+                self.assertIn(resp.status, (200, 403))
+        except urllib.error.HTTPError as err:
+            self.assertEqual(err.code, 403)
+
 
 if __name__ == "__main__":
     unittest.main()

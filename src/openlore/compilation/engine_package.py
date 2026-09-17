@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import json
+import os
+import re
 import tempfile
 import zipfile
 from datetime import datetime, timezone
@@ -38,24 +40,45 @@ class EnginePackageCompiler:
         package_name: Optional[str] = None,
     ) -> Path:
         """Execute packaging pipeline for the designated real-time engine."""
-        stage_path = Path(usd_stage_path).resolve()
-        out_dir = Path(output_dir).resolve()
-
         safe_roots = [
-            str(Path.cwd().resolve()),
-            str(Path(tempfile.gettempdir()).resolve()),
+            os.path.realpath(os.path.abspath(str(Path.cwd()))),
+            os.path.realpath(os.path.abspath(tempfile.gettempdir())),
         ]
-        if not any(str(stage_path).startswith(root) for root in safe_roots):
-            raise ValueError(f"Forbidden: OpenUSD stage path is outside allowed boundaries: {stage_path}")
-        if not any(str(out_dir).startswith(root) for root in safe_roots):
-            raise ValueError(f"Forbidden: Output directory is outside allowed boundaries: {out_dir}")
+
+        norm_stage = os.path.realpath(os.path.abspath(str(usd_stage_path).strip()))
+        stage_path: Optional[Path] = None
+        for root in safe_roots:
+            root_prefix = root if root.endswith(os.sep) else (root + os.sep)
+            if norm_stage.startswith(root_prefix):
+                stage_path = Path(norm_stage)
+                break
+            if norm_stage == root:
+                stage_path = Path(root)
+                break
+        if stage_path is None:
+            raise ValueError(f"Forbidden: OpenUSD stage path is outside allowed boundaries: {usd_stage_path}")
+
+        norm_out = os.path.realpath(os.path.abspath(str(output_dir).strip()))
+        out_dir: Optional[Path] = None
+        for root in safe_roots:
+            root_prefix = root if root.endswith(os.sep) else (root + os.sep)
+            if norm_out.startswith(root_prefix):
+                out_dir = Path(norm_out)
+                break
+            if norm_out == root:
+                out_dir = Path(root)
+                break
+        if out_dir is None:
+            raise ValueError(f"Forbidden: Output directory is outside allowed boundaries: {output_dir}")
 
         out_dir.mkdir(parents=True, exist_ok=True)
 
         if not stage_path.is_file():
             raise FileNotFoundError(f"OpenUSD stage not found at: {stage_path}")
 
-        pkg_name = package_name or stage_path.stem
+        raw_pkg_name = package_name or stage_path.stem
+        pkg_base = os.path.basename(str(raw_pkg_name).strip())
+        pkg_name = re.sub(r"[^A-Za-z0-9_\-\.]", "_", pkg_base).strip("._") or "package"
 
         # Extract geometry and collision primitives from USD stage
         mesh_records: List[Dict[str, Any]] = []
@@ -202,16 +225,39 @@ class EnginePackageCompiler:
                         zf.write(file_path, arcname=str(arcname))
 
         # Calculate package cryptographic hash
-        package_path = package_path.resolve()
-        if not any(str(package_path).startswith(root) for root in safe_roots):
+        norm_pkg_path = os.path.realpath(os.path.abspath(str(package_path)))
+        valid_package_path: Optional[Path] = None
+        for root in safe_roots:
+            root_prefix = root if root.endswith(os.sep) else (root + os.sep)
+            if norm_pkg_path.startswith(root_prefix):
+                valid_package_path = Path(norm_pkg_path)
+                break
+            if norm_pkg_path == root:
+                valid_package_path = Path(root)
+                break
+        if valid_package_path is None:
             raise ValueError(f"Forbidden: Package path outside allowed boundaries: {package_path}")
+
+        package_path = valid_package_path
         package_bytes = package_path.read_bytes()
         pkg_hash = blake3.blake3(package_bytes).hexdigest()
 
         # Write metadata manifest alongside package
-        manifest_file = (out_dir / f"{package_path.stem}_manifest.json").resolve()
-        if not any(str(manifest_file).startswith(root) for root in safe_roots):
-            raise ValueError(f"Forbidden: Manifest path outside allowed boundaries: {manifest_file}")
+        raw_manifest = out_dir / f"{package_path.stem}_manifest.json"
+        norm_manifest = os.path.realpath(os.path.abspath(str(raw_manifest)))
+        valid_manifest: Optional[Path] = None
+        for root in safe_roots:
+            root_prefix = root if root.endswith(os.sep) else (root + os.sep)
+            if norm_manifest.startswith(root_prefix):
+                valid_manifest = Path(norm_manifest)
+                break
+            if norm_manifest == root:
+                valid_manifest = Path(root)
+                break
+        if valid_manifest is None:
+            raise ValueError(f"Forbidden: Manifest path outside allowed boundaries: {raw_manifest}")
+
+        manifest_file = valid_manifest
         manifest_meta = {
             "package_file": package_path.name,
             "package_hash": pkg_hash,

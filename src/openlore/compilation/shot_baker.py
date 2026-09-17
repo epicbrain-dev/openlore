@@ -4,10 +4,12 @@ from __future__ import annotations
 
 import json
 import math
+import os
+import re
 import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import blake3
 
@@ -33,17 +35,36 @@ class OfflineShotBaker:
         shot_name: str = "shot_01",
     ) -> Path:
         """Bake deterministic shot geometry caches for offline cinematic renderers."""
-        stage_path = Path(usd_stage_path).resolve()
-        out_dir = Path(output_dir).resolve()
-
         safe_roots = [
-            str(Path.cwd().resolve()),
-            str(Path(tempfile.gettempdir()).resolve()),
+            os.path.realpath(os.path.abspath(str(Path.cwd()))),
+            os.path.realpath(os.path.abspath(tempfile.gettempdir())),
         ]
-        if not any(str(stage_path).startswith(root) for root in safe_roots):
-            raise ValueError(f"Forbidden: Source OpenUSD stage not found or outside allowed boundaries: {stage_path}")
-        if not any(str(out_dir).startswith(root) for root in safe_roots):
-            raise ValueError(f"Forbidden: Output directory is outside allowed boundaries: {out_dir}")
+
+        norm_stage = os.path.realpath(os.path.abspath(str(usd_stage_path).strip()))
+        stage_path: Optional[Path] = None
+        for root in safe_roots:
+            root_prefix = root if root.endswith(os.sep) else (root + os.sep)
+            if norm_stage.startswith(root_prefix):
+                stage_path = Path(norm_stage)
+                break
+            if norm_stage == root:
+                stage_path = Path(root)
+                break
+        if stage_path is None:
+            raise ValueError(f"Forbidden: Source OpenUSD stage not found or outside allowed boundaries: {usd_stage_path}")
+
+        norm_out = os.path.realpath(os.path.abspath(str(output_dir).strip()))
+        out_dir: Optional[Path] = None
+        for root in safe_roots:
+            root_prefix = root if root.endswith(os.sep) else (root + os.sep)
+            if norm_out.startswith(root_prefix):
+                out_dir = Path(norm_out)
+                break
+            if norm_out == root:
+                out_dir = Path(root)
+                break
+        if out_dir is None:
+            raise ValueError(f"Forbidden: Output directory is outside allowed boundaries: {output_dir}")
 
         out_dir.mkdir(parents=True, exist_ok=True)
 
@@ -53,7 +74,9 @@ class OfflineShotBaker:
         if start_frame > end_frame:
             raise ValueError(f"start_frame ({start_frame}) must be <= end_frame ({end_frame})")
 
-        cache_filename = f"{shot_name}_pointcache.usda"
+        shot_base = os.path.basename(str(shot_name).strip())
+        clean_shot_name = re.sub(r"[^A-Za-z0-9_\-\.]", "_", shot_base).strip("._") or "shot_01"
+        cache_filename = f"{clean_shot_name}_pointcache.usda"
         cache_path = out_dir / cache_filename
 
         baked_mesh_summaries: List[Dict[str, Any]] = []

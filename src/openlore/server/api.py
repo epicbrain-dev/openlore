@@ -95,6 +95,19 @@ class OpenLoreAPIHandler(BaseHTTPRequestHandler):
         except json.JSONDecodeError:
             return {}
 
+    def _resolve_allowed_path(self, raw_path: Any, safe_roots: list[str]) -> Optional[Path]:
+        """Safely normalize and validate that raw_path resides strictly within safe_roots (CWE-22 mitigation)."""
+        if not raw_path or not isinstance(raw_path, (str, Path)):
+            return None
+        norm_path = os.path.realpath(os.path.abspath(str(raw_path).strip()))
+        for root in safe_roots:
+            root_prefix = root if root.endswith(os.sep) else (root + os.sep)
+            if norm_path.startswith(root_prefix):
+                return Path(norm_path)
+            if norm_path == root:
+                return Path(root)
+        return None
+
     def do_GET(self) -> None:
         parsed_url = urllib.parse.urlparse(self.path)
         path = parsed_url.path
@@ -279,13 +292,14 @@ class OpenLoreAPIHandler(BaseHTTPRequestHandler):
 
             # Security: Sanitize stage path against allowed directory
             clean_param = os.path.basename(stage_param) if (".." in stage_param or "/" in stage_param) else stage_param
-            allowed_base = str(self.stage_dir.resolve())
-            candidate_path = (self.stage_dir / clean_param).resolve()
-            if not str(candidate_path).startswith(allowed_base):
+            allowed_base = os.path.realpath(os.path.abspath(str(self.stage_dir)))
+            allowed_prefix = allowed_base if allowed_base.endswith(os.sep) else (allowed_base + os.sep)
+            norm_candidate = os.path.realpath(os.path.abspath(str(self.stage_dir / clean_param)))
+            if not norm_candidate.startswith(allowed_prefix) and norm_candidate != allowed_base:
                 self._send_error("Forbidden: Path traversal detected in stage parameter", HTTPStatus.FORBIDDEN)
                 return
 
-            stage_path = candidate_path
+            stage_path = Path(norm_candidate)
             if not stage_path.is_file():
                 stage_files = list(self.stage_dir.glob("*.usd*"))
                 if stage_files:
@@ -453,13 +467,13 @@ class OpenLoreAPIHandler(BaseHTTPRequestHandler):
                 return
 
             safe_roots = [
-                str(Path.cwd().resolve()),
-                str(Path(tempfile.gettempdir()).resolve()),
-                str(self.stage_dir.resolve()),
-                str(self.builds_dir.resolve()),
+                os.path.realpath(os.path.abspath(str(Path.cwd()))),
+                os.path.realpath(os.path.abspath(tempfile.gettempdir())),
+                os.path.realpath(os.path.abspath(str(self.stage_dir))),
+                os.path.realpath(os.path.abspath(str(self.builds_dir))),
             ]
-            deliv_path = Path(deliv_raw).resolve()
-            if not any(str(deliv_path).startswith(root) for root in safe_roots):
+            deliv_path = self._resolve_allowed_path(deliv_raw, safe_roots)
+            if deliv_path is None:
                 self._send_error("Forbidden: Path traversal detected in deliverable_path", HTTPStatus.FORBIDDEN)
                 return
 
@@ -486,17 +500,17 @@ class OpenLoreAPIHandler(BaseHTTPRequestHandler):
             td_user = body.get("td_user", "lead_td")
 
             safe_roots = [
-                str(Path.cwd().resolve()),
-                str(Path(tempfile.gettempdir()).resolve()),
-                str(self.stage_dir.resolve()),
-                str(self.builds_dir.resolve()),
+                os.path.realpath(os.path.abspath(str(Path.cwd()))),
+                os.path.realpath(os.path.abspath(tempfile.gettempdir())),
+                os.path.realpath(os.path.abspath(str(self.stage_dir))),
+                os.path.realpath(os.path.abspath(str(self.builds_dir))),
             ]
-            deliv_path = Path(deliv_raw).resolve()
-            prod_path = Path(prod_raw).resolve()
-            if not any(str(deliv_path).startswith(root) for root in safe_roots):
+            deliv_path = self._resolve_allowed_path(deliv_raw, safe_roots)
+            if deliv_path is None:
                 self._send_error("Forbidden: Path traversal detected in deliverable_path", HTTPStatus.FORBIDDEN)
                 return
-            if not any(str(prod_path).startswith(root) for root in safe_roots):
+            prod_path = self._resolve_allowed_path(prod_raw, safe_roots)
+            if prod_path is None:
                 self._send_error("Forbidden: Path traversal detected in production_stage_path", HTTPStatus.FORBIDDEN)
                 return
 
@@ -529,14 +543,14 @@ class OpenLoreAPIHandler(BaseHTTPRequestHandler):
             stage_uri = body.get("stage_uri", "openlore://stages/hero_scene.usda")
             stage_path_str = body.get("stage_path", "")
             safe_roots = [
-                str(Path.cwd().resolve()),
-                str(Path(tempfile.gettempdir()).resolve()),
-                str(self.stage_dir.resolve()),
-                str(self.builds_dir.resolve()),
+                os.path.realpath(os.path.abspath(str(Path.cwd()))),
+                os.path.realpath(os.path.abspath(tempfile.gettempdir())),
+                os.path.realpath(os.path.abspath(str(self.stage_dir))),
+                os.path.realpath(os.path.abspath(str(self.builds_dir))),
             ]
             if stage_path_str:
-                stage_path = Path(stage_path_str).resolve()
-                if not any(str(stage_path).startswith(root) for root in safe_roots):
+                stage_path = self._resolve_allowed_path(stage_path_str, safe_roots)
+                if stage_path is None:
                     self._send_error("Forbidden: Path traversal detected in stage_path", HTTPStatus.FORBIDDEN)
                     return
             else:
