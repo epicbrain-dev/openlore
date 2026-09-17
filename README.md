@@ -16,7 +16,7 @@
   <a href="#kafka"><img src="https://img.shields.io/badge/Streaming-Kafka%20%7C%20CRDT-231F20.svg?logo=apachekafka&logoColor=white" alt="Kafka CRDT" /></a>
   <a href="#opa"><img src="https://img.shields.io/badge/Policy-OPA%20Rego-green.svg" alt="OPA Rego" /></a>
   <a href="#temporal"><img src="https://img.shields.io/badge/Grid-Temporal%20%7C%20Argo-red.svg" alt="Temporal / Argo" /></a>
-  <a href="#tests"><img src="https://img.shields.io/badge/Tests-101%20Passing-brightgreen.svg" alt="101 Tests Passing" /></a>
+  <a href="#tests"><img src="https://img.shields.io/badge/Tests-127%20Passing-brightgreen.svg" alt="127 Tests Passing" /></a>
 </p>
 
 <p align="center">
@@ -144,6 +144,21 @@ To install optional developer tools (pytest, ruff, mypy):
 pip install -e ".[dev]"
 ```
 
+### Pre-Packaged Releases & DCC Sidecars
+
+Pre-compiled packages and standalone DCC bridge archives are available on each [GitHub Release](https://github.com/epicbrain-dev/openlore/releases/latest):
+
+| Distribution Package | Target Environment | Description |
+|---|---|---|
+| `openlore-1.0.1-py3-none-any.whl` | Python 3.9+ | Universal wheel containing CLI, server, and core SDK |
+| `openlore-blender-addon-v1.0.1.zip` | Blender 4.x | Standard Blender zip add-on for Live Link & CAS sync |
+| `openlore-maya-bridge-v1.0.1.zip` | Autodesk Maya 2024+ | Maya scriptJob telemetry connector |
+| `openlore-houdini-solaris-v1.0.1.zip` | SideFX Houdini 20 | Solaris USD LOPs shelf tool and telemetry bridge |
+| `openlore-unreal-livelink-v1.0.1.zip` | Unreal Engine 5.3 / 5.4 | Turnkey C++ Live Link plugin (`Plugins/OpenLoreLiveLink`) |
+| `openlore-unity-livelink-v1.0.1.zip` | Unity 6 / 2023 LTS | Unity Package Manager (UPM) client |
+| `openlore-cpp-sdk-v1.0.1.zip` | C++17 Engines / DCCs | Zero-dependency header-only C++ SDK (`openlore.hpp`) |
+
+
 ### Step 2: Launch the Studio Cockpit
 
 Start the embedded REST API server and web application:
@@ -166,7 +181,7 @@ curl -s http://localhost:8000/api/status | python3 -m json.tool
 ```json
 {
     "status": "ONLINE",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "environment": "development",
     "cas_backend": "filesystem",
     "catalog_backend": "json",
@@ -200,6 +215,7 @@ curl -s http://localhost:8000/api/status | python3 -m json.tool
 | `openlore livelink`| `stream`, `export-plugin` | Run real-time UE5 Live Link bridge or export turnkey C++ plugin project. |
 | `openlore auth` | `create-token` | Generate HMAC-SHA256 bearer tokens with RBAC permission scopes. |
 | `openlore dcc` | `blender`, `maya`, `all` | Export turnkey telemetry bridge add-ons for Blender and Maya. |
+| `openlore farm` | `submit` | Dispatch GPU render farm jobs to AWS Deadline 10 or ASWF OpenCue. |
 
 ---
 
