@@ -1,0 +1,56 @@
+{{- if .Values.persistence.cas.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .Release.Name }}-cas-pvc
+  labels:
+    app.kubernetes.io/name: openlore
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: {{ .Values.persistence.cas.size }}
+  {{- if .Values.persistence.cas.storageClass }}
+  storageClassName: {{ .Values.persistence.cas.storageClass | quote }}
+  {{- end }}
+---
+{{- end }}
+{{- if .Values.persistence.stages.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .Release.Name }}-stages-pvc
+  labels:
+    app.kubernetes.io/name: openlore
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: {{ .Values.persistence.stages.size }}
+  {{- if .Values.persistence.stages.storageClass }}
+  storageClassName: {{ .Values.persistence.stages.storageClass | quote }}
+  {{- end }}
+---
+{{- end }}
+{{- if .Values.persistence.builds.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .Release.Name }}-builds-pvc
+  labels:
+    app.kubernetes.io/name: openlore
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: {{ .Values.persistence.builds.size }}
+  {{- if .Values.persistence.builds.storageClass }}
+  storageClassName: {{ .Values.persistence.builds.storageClass | quote }}
+  {{- end }}
+{{- end }}

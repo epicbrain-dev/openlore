@@ -33,3 +33,12 @@ class SecurityPolicyError(OpenLoreError):
 
 class LiveLinkBridgeError(OpenLoreError):
     """Raised when Unreal Engine Live Link connection, encoding, or handshake fails."""
+
+
+class CompilationError(OpenLoreError):
+    """Raised when downstream engine packaging, point caching, or grid workflows fail."""
+
+
+class RenderFarmError(CompilationError):
+    """Raised when render farm job submission, scheduling, or rendering fails."""
+

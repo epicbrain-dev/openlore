@@ -118,6 +118,14 @@ def build_release_packages(output_dir: Path) -> None:
         )
     print(f"  ✅ Created {unity_zip.name} ({unity_zip.stat().st_size:,} bytes)")
 
+    # Native C++ DCC SDK Zip
+    cpp_sdk_zip = output_dir / f"openlore-cpp-sdk-v{version}.zip"
+    cpp_header = REPO_ROOT / "include" / "openlore" / "openlore.hpp"
+    if cpp_header.exists():
+        with zipfile.ZipFile(cpp_sdk_zip, "w", zipfile.ZIP_DEFLATED) as z:
+            z.write(cpp_header, arcname="include/openlore/openlore.hpp")
+        print(f"  ✅ Created {cpp_sdk_zip.name} ({cpp_sdk_zip.stat().st_size:,} bytes)")
+
     # 5. Generate Checksums
     print("\n[5/5] Generating SHA-256 Checksums...")
     checksums_file = output_dir / "SHA256SUMS.txt"

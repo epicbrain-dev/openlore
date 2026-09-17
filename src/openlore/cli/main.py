@@ -125,6 +125,20 @@ def create_parser() -> argparse.ArgumentParser:
     dcc_cmd.add_argument("target", choices=["blender", "maya", "all"], default="all", nargs="?", help="Target DCC application")
     dcc_cmd.add_argument("--output-dir", default="./dcc", help="Base output directory")
 
+    # farm
+    farm_cmd = subparsers.add_parser("farm", help="Distributed GPU Render Farm submission (AWS Deadline, ASWF OpenCue)")
+    farm_cmd.add_argument("action", choices=["submit"], default="submit", nargs="?", help="Farm action")
+    farm_cmd.add_argument("--scheduler", choices=["deadline", "opencue"], default="deadline", help="Farm scheduler")
+    farm_cmd.add_argument("--stage", required=True, help="OpenUSD stage URI to render")
+    farm_cmd.add_argument("--renderer", choices=["karma", "arnold", "renderman", "usdrecord"], default="karma", help="Render engine")
+    farm_cmd.add_argument("--start-frame", type=int, default=1, help="Start frame")
+    farm_cmd.add_argument("--end-frame", type=int, default=24, help="End frame")
+    farm_cmd.add_argument("--chunk-size", type=int, default=5, help="Frame chunk size per task")
+    farm_cmd.add_argument("--output-dir", default="./renders", help="Render output directory")
+    farm_cmd.add_argument("--camera", default="/World/Camera", help="Render camera prim path")
+    farm_cmd.add_argument("--job-name", default="openlore_render", help="Render job name")
+    farm_cmd.add_argument("--dry-run", action="store_true", default=True, help="Dry run simulation mode")
+
     return parser
 
 
@@ -485,6 +499,30 @@ def main(args: Sequence[str] | None = None) -> int:
             print(f"[OpenLore DCC] Exported Autodesk Maya Bridge to: {m_file}")
 
         print(f"[OpenLore DCC] DCC sidecar exports complete in '{out_dir}'.")
+        return 0
+
+    if parsed_args.command == "farm":
+        from openlore.compilation.farm import (
+            FarmJobConfig,
+            FarmScheduler,
+            RenderEngine,
+            RenderFarmDispatcher,
+        )
+
+        cfg = FarmJobConfig(
+            job_name=parsed_args.job_name,
+            stage_uri=parsed_args.stage,
+            renderer=RenderEngine(parsed_args.renderer),
+            start_frame=parsed_args.start_frame,
+            end_frame=parsed_args.end_frame,
+            chunk_size=parsed_args.chunk_size,
+            output_dir=parsed_args.output_dir,
+            camera=parsed_args.camera,
+        )
+        scheduler = FarmScheduler(parsed_args.scheduler)
+        res = RenderFarmDispatcher.submit_job(cfg, scheduler=scheduler, dry_run=parsed_args.dry_run)
+        print(f"[OpenLore Farm] Job submitted to {scheduler.value.upper()}:")
+        print(json.dumps(res, indent=2))
         return 0
 
     print(f"[OpenLore] Command '{parsed_args.command}' execution stub.")

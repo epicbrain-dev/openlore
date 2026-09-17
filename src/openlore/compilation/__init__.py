@@ -8,6 +8,12 @@ from openlore.compilation.catalog_backend import (
     RelationalCatalogBackend,
 )
 from openlore.compilation.engine_package import EnginePackageCompiler
+from openlore.compilation.farm import (
+    FarmJobConfig,
+    FarmScheduler,
+    RenderEngine,
+    RenderFarmDispatcher,
+)
 from openlore.compilation.grid import (
     CompilationJob,
     CompilationJobStatus,
@@ -26,5 +32,9 @@ __all__ = [
     "AbstractCatalogBackend",
     "JsonFileCatalogBackend",
     "RelationalCatalogBackend",
+    "RenderFarmDispatcher",
+    "FarmScheduler",
+    "RenderEngine",
+    "FarmJobConfig",
 ]
 

@@ -3,7 +3,7 @@ replicaCount: 3
 image:
   repository: openlore/openlore-api
   pullPolicy: IfNotPresent
-  tag: "1.0.0"
+  tag: "1.0.1"
 
 service:
   type: ClusterIP
@@ -32,11 +32,39 @@ resources:
     cpu: 500m
     memory: 1Gi
 
+probes:
+  livenessPath: /health
+  readinessPath: /health
+  initialDelaySeconds: 10
+  periodSeconds: 15
+
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 75
+  targetMemoryUtilizationPercentage: 80
+
 persistence:
   cas:
     enabled: true
     size: 500Gi
     storageClass: "standard"
+    mountPath: /app/data/cas
+  stages:
+    enabled: true
+    size: 100Gi
+    storageClass: "standard"
+    mountPath: /app/stages
+  builds:
+    enabled: true
+    size: 250Gi
+    storageClass: "standard"
+    mountPath: /app/builds
+
+secrets:
+  authSecret: "openlore-enterprise-master-key-2026"
+  signingKey: "openlore-studio-master-signing-key-2026"
 
 env:
   authEnabled: "true"
@@ -44,3 +72,6 @@ env:
   opaUrl: "http://openlore-opa:8181/v1/data/openlore/royalties"
   triplestoreUrl: "http://openlore-fuseki:3030/openlore"
   temporalUrl: "openlore-temporal:7233"
+  casRoot: "/app/data/cas"
+  catalogBackend: "json"
+

@@ -34,6 +34,20 @@ spec:
           env:
             - name: OPENLORE_AUTH_ENABLED
               value: "{{ .Values.env.authEnabled }}"
+            - name: OPENLORE_AUTH_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-secrets
+                  key: OPENLORE_AUTH_SECRET
+            - name: OPENLORE_SIGNING_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-secrets
+                  key: OPENLORE_SIGNING_KEY
+            - name: OPENLORE_CAS_ROOT
+              value: "{{ .Values.env.casRoot }}"
+            - name: OPENLORE_CATALOG_BACKEND
+              value: "{{ .Values.env.catalogBackend }}"
             - name: OPENLORE_KAFKA_SERVERS
               value: "{{ .Values.env.kafkaServers }}"
             - name: OPENLORE_OPA_URL
@@ -44,15 +58,44 @@ spec:
               value: "{{ .Values.env.temporalUrl }}"
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            {{- if .Values.persistence.cas.enabled }}
+            - name: cas-volume
+              mountPath: {{ .Values.persistence.cas.mountPath }}
+            {{- end }}
+            {{- if .Values.persistence.stages.enabled }}
+            - name: stages-volume
+              mountPath: {{ .Values.persistence.stages.mountPath }}
+            {{- end }}
+            {{- if .Values.persistence.builds.enabled }}
+            - name: builds-volume
+              mountPath: {{ .Values.persistence.builds.mountPath }}
+            {{- end }}
           livenessProbe:
             httpGet:
-              path: /api/status
+              path: {{ .Values.probes.livenessPath | default "/health" }}
               port: 8000
-            initialDelaySeconds: 10
-            periodSeconds: 15
+            initialDelaySeconds: {{ .Values.probes.initialDelaySeconds | default 10 }}
+            periodSeconds: {{ .Values.probes.periodSeconds | default 15 }}
           readinessProbe:
             httpGet:
-              path: /api/status
+              path: {{ .Values.probes.readinessPath | default "/health" }}
               port: 8000
             initialDelaySeconds: 5
             periodSeconds: 10
+      volumes:
+        {{- if .Values.persistence.cas.enabled }}
+        - name: cas-volume
+          persistentVolumeClaim:
+            claimName: {{ .Release.Name }}-cas-pvc
+        {{- end }}
+        {{- if .Values.persistence.stages.enabled }}
+        - name: stages-volume
+          persistentVolumeClaim:
+            claimName: {{ .Release.Name }}-stages-pvc
+        {{- end }}
+        {{- if .Values.persistence.builds.enabled }}
+        - name: builds-volume
+          persistentVolumeClaim:
+            claimName: {{ .Release.Name }}-builds-pvc
+        {{- end }}

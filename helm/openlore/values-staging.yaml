@@ -32,11 +32,26 @@ resources:
     cpu: 250m
     memory: 512Mi
 
+probes:
+  livenessPath: /health
+  readinessPath: /health
+  initialDelaySeconds: 10
+  periodSeconds: 15
+
 persistence:
   cas:
     enabled: true
     size: 50Gi
     storageClass: "standard"
+    mountPath: /app/data/cas
+  stages:
+    enabled: false
+  builds:
+    enabled: false
+
+secrets:
+  authSecret: "openlore-staging-key-2026"
+  signingKey: "openlore-staging-signing-key-2026"
 
 env:
   environment: "staging"

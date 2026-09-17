@@ -224,6 +224,39 @@ class WorkerGridDispatcher:
                     job.activities[activity_name]["status"] = "COMPLETED"
                     job.activities[activity_name]["completed_at"] = datetime.now(timezone.utc).isoformat()
 
+                elif target_norm in ("deadline", "opencue", "render-farm", "farm"):
+                    activity_name = f"dispatch_farm_{target_norm}"
+                    job.activities[activity_name] = {
+                        "status": "RUNNING",
+                        "started_at": datetime.now(timezone.utc).isoformat(),
+                    }
+                    from openlore.compilation.farm import (
+                        FarmJobConfig,
+                        FarmScheduler,
+                        RenderEngine,
+                        RenderFarmDispatcher,
+                    )
+
+                    sched = FarmScheduler.OPENCUE if target_norm == "opencue" else FarmScheduler.DEADLINE
+                    farm_cfg = FarmJobConfig(
+                        job_name=shot_name,
+                        stage_uri=stage_uri,
+                        renderer=RenderEngine.KARMA,
+                        output_dir=str(out_dir),
+                    )
+                    farm_res = RenderFarmDispatcher.submit_job(farm_cfg, scheduler=sched, dry_run=True)
+                    job.artifacts[f"farm_{sched.value}"] = farm_res["job_id"]
+                    self.catalog.register_build(
+                        stage_uri=stage_uri,
+                        build_type=f"render_farm_{sched.value}",
+                        artifact_path=farm_res["output_dir"],
+                        cas_hash=blake3.blake3(farm_res["job_id"].encode()).hexdigest(),
+                        metadata=farm_res,
+                    )
+                    job.activities[activity_name]["status"] = "COMPLETED"
+                    job.activities[activity_name]["completed_at"] = datetime.now(timezone.utc).isoformat()
+
+
             # 3. Activity: RegisterCatalog
             job.activities["register_catalog"] = {
                 "status": "COMPLETED",
@@ -241,6 +274,8 @@ class WorkerGridDispatcher:
             raise
 
         return workflow_id
+
+    dispatch_compilation_workflow = trigger_compilation_workflow
 
     def get_job_status(self, workflow_id: str) -> Dict[str, Any]:
         """Query current execution status of a compilation job."""

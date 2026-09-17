@@ -52,6 +52,7 @@ jobs:
             dist/openlore-houdini-*.zip
             dist/openlore-unreal-*.zip
             dist/openlore-unity-*.zip
+            dist/openlore-cpp-sdk-*.zip
             dist/SHA256SUMS.txt
           generate_release_notes: true
           draft: false
