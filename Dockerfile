@@ -19,7 +19,7 @@ FROM python:3.12-slim AS runtime
 
 LABEL maintainer="OpenLore Engineering <engineering@openlore.io>"
 LABEL description="OpenLore: Git for 3D worlds, game lore, and Hollywood pipelines."
-LABEL version="1.0.2"
+LABEL version="1.5.0"
 
 WORKDIR /app
 

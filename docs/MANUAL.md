@@ -1,7 +1,7 @@
 # OpenLore: Comprehensive Instruction & Operations Manual
 
 _Tagline: "Git for 3D worlds, game lore, and Hollywood pipelines."_  
-_Document Version: 1.0.2 (Production Release)_  
+_Document Version: 1.5.0 (Production Release)_  
 _Target Audience: Pipeline TDs, Lead 3D Artists, Narrative Directors, Game Developers, DevOps Engineers, and Studio Systems Administrators._
 
 ---
@@ -30,6 +30,7 @@ _Target Audience: Pipeline TDs, Lead 3D Artists, Narrative Directors, Game Devel
    - [3.10 openlore livelink](#310-openlore-livelink)
    - [3.11 openlore auth](#311-openlore-auth)
    - [3.12 openlore dcc](#312-openlore-dcc)
+   - [3.13 openlore doctor](#313-openlore-doctor)
 4. [Web Studio Cockpit Operator Guide](#4-web-studio-cockpit-operator-guide)
    - [4.1 Starting the Cockpit](#41-starting-the-cockpit)
    - [4.2 Tab 1: Stage Viewport & Real-Time Telemetry](#42-tab-1-stage-viewport--real-time-telemetry)
@@ -135,6 +136,24 @@ OpenLore acts as the central production backbone, unifying OpenUSD scene graph m
   - Unreal Engine 5.3 / 5.4+ (for Live Link streaming and C++ plugin compilation).
 
 ## 2.2 CLI Installation (Global & Local)
+
+### Option 0: Turnkey 1-Line Cross-Platform Installer (Recommended)
+Installs OpenLore in an isolated virtual environment (`~/.openlore`), configures launcher shims, deploys Web Cockpit assets, and sets up your system `PATH`:
+
+**macOS / Linux:**
+```bash
+curl -fsSL https://openlore.io/install.sh | bash
+```
+
+**Windows (PowerShell 5.1+ / 7+):**
+```powershell
+irm https://openlore.io/install.ps1 | iex
+```
+
+**Universal Python Installer:**
+```bash
+python3 installer.py --yes
+```
 
 ### Option A: Immediate Repository Usage (Zero-Install)
 From the root of the cloned repository:
@@ -344,6 +363,17 @@ openlore dcc export-maya --output-dir ./dcc_exports/maya
 
 # Export all DCC sidecars simultaneously
 openlore dcc all --output-dir ./dcc_exports
+```
+
+## 3.13 openlore doctor
+Runs comprehensive system, environment, storage, network port, dependency, and 3D DCC diagnostics.
+
+```bash
+# Run interactive diagnostic report
+openlore doctor
+
+# Export diagnostic report as JSON
+openlore doctor --json
 ```
 
 ---

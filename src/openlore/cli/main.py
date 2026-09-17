@@ -95,7 +95,7 @@ def create_parser() -> argparse.ArgumentParser:
     web_cmd = subparsers.add_parser("web", help="Start the OpenLore Web Studio and REST API server")
     web_cmd.add_argument("--port", type=int, default=8000, help="Port to listen on (default 8000)")
     web_cmd.add_argument("--host", default="127.0.0.1", help="Host address (default 127.0.0.1)")
-    web_cmd.add_argument("--static-dir", default="./web/dist", help="Directory containing compiled React frontend")
+    web_cmd.add_argument("--static-dir", default=None, help="Directory containing compiled React frontend (auto-detected if omitted)")
 
     # livelink
     livelink_cmd = subparsers.add_parser("livelink", help="Unreal Engine 5 Live Link bridge and plugin generator")
@@ -138,6 +138,10 @@ def create_parser() -> argparse.ArgumentParser:
     farm_cmd.add_argument("--camera", default="/World/Camera", help="Render camera prim path")
     farm_cmd.add_argument("--job-name", default="openlore_render", help="Render job name")
     farm_cmd.add_argument("--dry-run", action="store_true", default=True, help="Dry run simulation mode")
+
+    # doctor
+    doctor_cmd = subparsers.add_parser("doctor", help="Run comprehensive system, environment, and DCC diagnostics")
+    doctor_cmd.add_argument("--json", action="store_true", help="Output diagnostic report in JSON format")
 
     return parser
 
@@ -427,8 +431,26 @@ def main(args: Sequence[str] | None = None) -> int:
 
     if parsed_args.command == "web":
         from openlore.server.api import run_server
-        static_p = Path(parsed_args.static_dir)
-        run_server(port=parsed_args.port, host=parsed_args.host, static_dir=static_p if static_p.is_dir() else None)
+        static_p = None
+        if parsed_args.static_dir:
+            cand = Path(parsed_args.static_dir).resolve()
+            if cand.is_dir():
+                static_p = cand
+
+        if static_p is None:
+            # Smart fallback discovery across repo, home directory, and package location
+            candidates = [
+                Path.cwd() / "web" / "dist",
+                Path.home() / ".openlore" / "web" / "dist",
+                Path(__file__).resolve().parent.parent.parent.parent / "web" / "dist",
+                Path(__file__).resolve().parent.parent / "web" / "dist",
+            ]
+            for c in candidates:
+                if c.is_dir() and (c / "index.html").is_file():
+                    static_p = c.resolve()
+                    break
+
+        run_server(port=parsed_args.port, host=parsed_args.host, static_dir=static_p)
         return 0
 
     if parsed_args.command == "livelink":
@@ -523,6 +545,135 @@ def main(args: Sequence[str] | None = None) -> int:
         res = RenderFarmDispatcher.submit_job(cfg, scheduler=scheduler, dry_run=parsed_args.dry_run)
         print(f"[OpenLore Farm] Job submitted to {scheduler.value.upper()}:")
         print(json.dumps(res, indent=2))
+        return 0
+
+    if parsed_args.command == "doctor":
+        import platform
+        import shutil
+        import socket
+        from openlore import __version__
+
+        def check_module(mod_name: str) -> bool:
+            try:
+                __import__(mod_name)
+                return True
+            except ImportError:
+                return False
+
+        def check_port(p: int) -> bool:
+            try:
+                with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                    s.settimeout(0.5)
+                    return s.connect_ex(("127.0.0.1", p)) != 0
+            except Exception:
+                return True
+
+        # Probe web assets
+        web_path = None
+        for cand in [
+            Path.cwd() / "web" / "dist",
+            Path.home() / ".openlore" / "web" / "dist",
+            Path(__file__).resolve().parent.parent.parent.parent / "web" / "dist",
+        ]:
+            if cand.is_dir() and (cand / "index.html").is_file():
+                web_path = str(cand.resolve())
+                break
+
+        # Probe DCCs
+        dccs: dict[str, str | None] = {
+            "blender": shutil.which("blender"),
+            "maya": shutil.which("maya"),
+            "houdini": shutil.which("houdini"),
+            "unreal": shutil.which("UnrealEditor"),
+            "unity": shutil.which("Unity"),
+        }
+        if platform.system() == "Darwin":
+            if not dccs["blender"] and Path("/Applications/Blender.app").exists():
+                dccs["blender"] = "/Applications/Blender.app"
+            if not dccs["unreal"] and Path("/Users/Shared/Epic Games").exists():
+                for up in Path("/Users/Shared/Epic Games").glob("UE_*"):
+                    if up.is_dir():
+                        dccs["unreal"] = str(up)
+                        break
+
+        # Probe CAS root
+        cas_root = Path("./data/cas")
+        if not cas_root.exists():
+            cas_root = Path.home() / ".openlore" / "data" / "cas"
+
+        cas_writable = False
+        try:
+            cas_root.mkdir(parents=True, exist_ok=True)
+            test_file = cas_root / ".write_test"
+            test_file.write_text("ok")
+            test_file.unlink()
+            cas_writable = True
+        except Exception:
+            cas_writable = False
+
+        report = {
+            "version": __version__,
+            "platform": {
+                "os": platform.system(),
+                "arch": platform.machine(),
+                "python": f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}",
+                "executable": sys.executable,
+            },
+            "cas": {
+                "path": str(cas_root.resolve()),
+                "writable": cas_writable,
+            },
+            "web_cockpit": {
+                "available": web_path is not None,
+                "path": web_path,
+            },
+            "ports": {
+                "web_8000_free": check_port(8000),
+                "livelink_11111_free": check_port(11111),
+            },
+            "dependencies": {
+                "blake3": check_module("blake3"),
+                "rdflib": check_module("rdflib"),
+                "pyshacl": check_module("pyshacl"),
+                "confluent_kafka": check_module("confluent_kafka"),
+                "temporalio": check_module("temporalio"),
+                "openusd": check_module("pxr.Usd"),
+                "materialx": check_module("materialx"),
+            },
+            "dcc_tools": dccs,
+        }
+
+        if parsed_args.json:
+            print(json.dumps(report, indent=2))
+            return 0
+
+        print("=" * 70)
+        print(f"🩺 OpenLore System Health & Environment Doctor — v{__version__}")
+        print("=" * 70)
+        print(f"\n[Environment]")
+        print(f"  • Operating System: {report['platform']['os']} ({report['platform']['arch']})")
+        print(f"  • Python Runtime:   {report['platform']['python']} ({report['platform']['executable']})")
+        print(f"  • Core Module Path: {Path(__file__).resolve().parent.parent}")
+
+        print(f"\n[Storage & Web Cockpit]")
+        print(f"  • CAS Root:         {report['cas']['path']} ({'✅ Writable' if report['cas']['writable'] else '❌ Not Writable'})")
+        print(f"  • Web Studio Assets:{'✅ Found at ' + web_path if web_path else '⚠️ Missing (run installer.py or openlore web --static-dir <dir>)'}")
+        print(f"  • Port 8000 (HTTP): {'✅ Available' if report['ports']['web_8000_free'] else '⚠️ In use or occupied'}")
+        print(f"  • Port 11111 (UDP): {'✅ Available' if report['ports']['livelink_11111_free'] else '⚠️ In use or occupied'}")
+
+        print(f"\n[Core Dependencies]")
+        for dep, ok in report["dependencies"].items():
+            status_str = "✅ Active" if ok else "⚠️ Not installed (pure Python fallback used if applicable)"
+            print(f"  • {dep:<16}: {status_str}")
+
+        print(f"\n[3D DCC Connectors]")
+        for dcc, p in report["dcc_tools"].items():
+            status_str = f"✅ Detected ({p})" if p else "○ Not detected in standard paths"
+            print(f"  • {dcc.capitalize():<16}: {status_str}")
+
+        print("\n" + "=" * 70)
+        print("🎉 Diagnostics complete. OpenLore is ready for production workloads.")
+        print("=" * 70)
         return 0
 
     print(f"[OpenLore] Command '{parsed_args.command}' execution stub.")

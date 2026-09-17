@@ -122,5 +122,13 @@ class TestOpenLoreCLI(unittest.TestCase):
         self.assertIn("OpenLore Quarantine Linting", out)
 
 
+    def test_cli_doctor(self) -> None:
+        exit_code, out = self._run_cli(["doctor"])
+        self.assertEqual(exit_code, 0)
+        self.assertIn("OpenLore System Health & Environment Doctor", out)
+        self.assertIn("Operating System:", out)
+
+
 if __name__ == "__main__":
     unittest.main()
+

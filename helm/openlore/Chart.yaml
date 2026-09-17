@@ -2,8 +2,8 @@ apiVersion: v2
 name: openlore
 description: Enterprise Helm Chart for OpenLore - Git for 3D worlds, game lore, and Hollywood pipelines.
 type: application
-version: 1.0.2
-appVersion: "1.0.2"
+version: 1.5.0
+appVersion: "1.5.0"
 maintainers:
   - name: OpenLore Engineering
     email: engineering@openlore.io

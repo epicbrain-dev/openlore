@@ -220,5 +220,27 @@
   - [x] Remediated all 20 CodeQL High Severity path injection alerts across REST API handlers, quarantine linter, compilation worker grid, engine packager, and shot point cache baker.
   - [x] Added rigorous security test suite in [tests/unit/test_path_safety.py](tests/unit/test_path_safety.py) and regression tests in [tests/unit/test_server.py](tests/unit/test_server.py).
   - [x] Rebuilt frontend bundle (`web/dist/`) and bumped version to `1.0.2` across Python, C++ SDK, Helm, Docker, and Web assets.
-  - [x] Verified 100% test pass rate (139/139 passing across 26 modules).
+- [x] Verified 100% test pass rate (139/139 passing across 26 modules).
 
+---
+
+## Phase 12: Cross-Platform Installer Suite & Adoption Polish
+- [x] **Universal Cross-Platform Python Installer**:
+  - [x] Built zero-dependency, standalone installer engine in [installer.py](installer.py) supporting macOS, Linux, and Windows.
+  - [x] Integrated preflight environment detection (OS, architecture, Python >= 3.9, DCC tools).
+  - [x] Implemented isolated virtual environment provisioning (`~/.openlore/env`).
+  - [x] Implemented Web Studio cockpit assets deployment (`~/.openlore/web/dist`).
+  - [x] Built executable launcher shims: `openlore` (Unix bash), `openlore.cmd` (Windows batch), and `openlore.ps1` (PowerShell).
+  - [x] Automated persistent user shell PATH configuration (`.zshrc`, `.bashrc`, Windows User Environment).
+  - [x] Implemented non-interactive scripted modes (`--yes`, `--prefix`, `--with-dcc`, `--launch-web`, `--no-modify-path`).
+  - [x] Implemented complete clean uninstaller (`installer.py --uninstall`).
+- [x] **1-Line Shell Installers**:
+  - [x] Authored macOS / Linux turnkey script in [install.sh](install.sh) (`curl -fsSL https://openlore.io/install.sh | bash`).
+  - [x] Authored Windows PowerShell script in [install.ps1](install.ps1) (`irm https://openlore.io/install.ps1 | iex`).
+- [x] **System Doctor & Web Asset Fallbacks**:
+  - [x] Added `openlore doctor` in [src/openlore/cli/main.py](src/openlore/cli/main.py) diagnosing OS, CAS permissions, dependencies, ports, and DCCs with optional `--json` export.
+  - [x] Added multi-path static asset resolution in `openlore web` enabling seamless execution from any working directory.
+- [x] **Release Packaging & Automated Tests**:
+  - [x] Updated [scripts/package_release.py](scripts/package_release.py) to bundle `openlore-installer-unix-v1.0.2.tar.gz` and `openlore-installer-windows-v1.0.2.zip` with SHA-256 verification.
+  - [x] Created comprehensive unit test suite in [tests/unit/test_installer.py](tests/unit/test_installer.py) and expanded [tests/unit/test_cli.py](tests/unit/test_cli.py).
+  - [x] Verified full regression pass rate (151/151 tests passing across 27 modules).

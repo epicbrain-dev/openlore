@@ -126,8 +126,30 @@ def build_release_packages(output_dir: Path) -> None:
             z.write(cpp_header, arcname="include/openlore/openlore.hpp")
         print(f"  ✅ Created {cpp_sdk_zip.name} ({cpp_sdk_zip.stat().st_size:,} bytes)")
 
-    # 5. Generate Checksums
-    print("\n[5/5] Generating SHA-256 Checksums...")
+    # 5. Package Cross-Platform Turnkey Installers
+    print("\n[5/6] Packaging Cross-Platform Turnkey Installer Bundles...")
+    import tarfile
+
+    # Unix installer tarball (macOS & Linux)
+    unix_tar = output_dir / f"openlore-installer-unix-v{version}.tar.gz"
+    with tarfile.open(unix_tar, "w:gz") as tar:
+        for fname in ["install.sh", "installer.py", "README.md"]:
+            fpath = REPO_ROOT / fname
+            if fpath.exists():
+                tar.add(fpath, arcname=f"openlore-installer/{fname}")
+    print(f"  ✅ Created {unix_tar.name} ({unix_tar.stat().st_size:,} bytes)")
+
+    # Windows installer zip
+    win_zip = output_dir / f"openlore-installer-windows-v{version}.zip"
+    with zipfile.ZipFile(win_zip, "w", zipfile.ZIP_DEFLATED) as z:
+        for fname in ["install.ps1", "installer.py", "README.md"]:
+            fpath = REPO_ROOT / fname
+            if fpath.exists():
+                z.write(fpath, arcname=f"openlore-installer/{fname}")
+    print(f"  ✅ Created {win_zip.name} ({win_zip.stat().st_size:,} bytes)")
+
+    # 6. Generate Checksums
+    print("\n[6/6] Generating SHA-256 Checksums...")
     checksums_file = output_dir / "SHA256SUMS.txt"
     with open(checksums_file, "w", encoding="utf-8") as f:
         for item in sorted(output_dir.iterdir()):

@@ -16,7 +16,7 @@
   <a href="#kafka"><img src="https://img.shields.io/badge/Streaming-Kafka%20%7C%20CRDT-231F20.svg?logo=apachekafka&logoColor=white" alt="Kafka CRDT" /></a>
   <a href="#opa"><img src="https://img.shields.io/badge/Policy-OPA%20Rego-green.svg" alt="OPA Rego" /></a>
   <a href="#temporal"><img src="https://img.shields.io/badge/Grid-Temporal%20%7C%20Argo-red.svg" alt="Temporal / Argo" /></a>
-  <a href="#tests"><img src="https://img.shields.io/badge/Tests-139%20Passing-brightgreen.svg" alt="139 Tests Passing" /></a>
+  <a href="#tests"><img src="https://img.shields.io/badge/Tests-151%20Passing-brightgreen.svg" alt="151 Tests Passing" /></a>
 </p>
 
 <p align="center">
@@ -131,7 +131,30 @@ Modern entertainment franchises span feature films, AAA games, television series
 * **Modern Web Browser**: Chrome, Firefox, Safari, or Edge.
 * *Note: Pre-built web assets are included in `web/dist`—no Node.js installation is required to run the cockpit.*
 
-### Step 1: Clone & Install
+### 🚀 1-Line Turnkey Installer (Recommended)
+
+Install OpenLore automatically with an isolated runtime, pre-configured launcher shims, web cockpit assets, and shell PATH integration:
+
+**macOS & Linux:**
+```bash
+curl -fsSL https://openlore.io/install.sh | bash
+```
+
+**Windows (PowerShell 5.1+ / 7+):**
+```powershell
+irm https://openlore.io/install.ps1 | iex
+```
+
+**Universal Python (Any Platform):**
+```bash
+python3 installer.py --yes
+```
+
+> **Options & DCC Integration**: Pass `--with-dcc all` to export Blender, Maya, Houdini, Unreal, and Unity sidecars automatically, or `--launch-web` to open the Web Studio immediately upon install. Run `openlore doctor` anytime to verify environment health.
+
+---
+
+### Step 1: Manual Clone & Install (Developers)
 
 ```bash
 git clone git@github.com:epicbrain-dev/openlore.git
@@ -150,13 +173,15 @@ Pre-compiled packages and standalone DCC bridge archives are available on each [
 
 | Distribution Package | Target Environment | Description |
 |---|---|---|
-| `openlore-1.0.2-py3-none-any.whl` | Python 3.9+ | Universal wheel containing CLI, server, and core SDK |
-| `openlore-blender-addon-v1.0.2.zip` | Blender 4.x | Standard Blender zip add-on for Live Link & CAS sync |
-| `openlore-maya-bridge-v1.0.2.zip` | Autodesk Maya 2024+ | Maya scriptJob telemetry connector |
-| `openlore-houdini-solaris-v1.0.2.zip` | SideFX Houdini 20 | Solaris USD LOPs shelf tool and telemetry bridge |
-| `openlore-unreal-livelink-v1.0.2.zip` | Unreal Engine 5.3 / 5.4 | Turnkey C++ Live Link plugin (`Plugins/OpenLoreLiveLink`) |
-| `openlore-unity-livelink-v1.0.2.zip` | Unity 6 / 2023 LTS | Unity Package Manager (UPM) client |
-| `openlore-cpp-sdk-v1.0.2.zip` | C++17 Engines / DCCs | Zero-dependency header-only C++ SDK (`openlore.hpp`) |
+| `openlore-1.5.0-py3-none-any.whl` | Python 3.9+ | Universal wheel containing CLI, server, and core SDK |
+| `openlore-installer-unix-v1.5.0.tar.gz` | macOS / Linux | Turnkey installer bundle with `install.sh` & isolated runtime |
+| `openlore-installer-windows-v1.5.0.zip` | Windows 10/11 | Turnkey installer bundle with `install.ps1` & PowerShell launcher |
+| `openlore-blender-addon-v1.5.0.zip` | Blender 4.x | Standard Blender zip add-on for Live Link & CAS sync |
+| `openlore-maya-bridge-v1.5.0.zip` | Autodesk Maya 2024+ | Maya scriptJob telemetry connector |
+| `openlore-houdini-solaris-v1.5.0.zip` | SideFX Houdini 20 | Solaris USD LOPs shelf tool and telemetry bridge |
+| `openlore-unreal-livelink-v1.5.0.zip` | Unreal Engine 5.3 / 5.4 | Turnkey C++ Live Link plugin (`Plugins/OpenLoreLiveLink`) |
+| `openlore-unity-livelink-v1.5.0.zip` | Unity 6 / 2023 LTS | Unity Package Manager (UPM) client |
+| `openlore-cpp-sdk-v1.5.0.zip` | C++17 Engines / DCCs | Zero-dependency header-only C++ SDK (`openlore.hpp`) |
 
 
 ### Step 2: Launch the Studio Cockpit
@@ -181,7 +206,7 @@ curl -s http://localhost:8000/api/status | python3 -m json.tool
 ```json
 {
     "status": "ONLINE",
-    "version": "1.0.2",
+    "version": "1.5.0",
     "environment": "development",
     "cas_backend": "filesystem",
     "catalog_backend": "json",
@@ -216,6 +241,7 @@ curl -s http://localhost:8000/api/status | python3 -m json.tool
 | `openlore auth` | `create-token` | Generate HMAC-SHA256 bearer tokens with RBAC permission scopes. |
 | `openlore dcc` | `blender`, `maya`, `all` | Export turnkey telemetry bridge add-ons for Blender and Maya. |
 | `openlore farm` | `submit` | Dispatch GPU render farm jobs to AWS Deadline 10 or ASWF OpenCue. |
+| `openlore doctor` | `--json` | Run comprehensive system, environment, CAS, and DCC diagnostics. |
 
 ---
 
