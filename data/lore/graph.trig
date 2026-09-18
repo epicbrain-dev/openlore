@@ -4,6 +4,32 @@
 @prefix timeline: <https://openlore.io/timelines/> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
+{
+    timeline:api_test_branch_01 a canon:AlternateContinuity,
+            canon:Timeline ;
+        rdfs:label "API Test Branched Timeline"^^xsd:string ;
+        canon:createdAt "2026-09-14T15:31:31.022151+00:00"^^xsd:dateTime,
+            "2026-09-18T03:24:11.020523+00:00"^^xsd:dateTime,
+            "2026-09-18T03:33:34.879367+00:00"^^xsd:dateTime,
+            "2026-09-18T03:38:06.918507+00:00"^^xsd:dateTime,
+            "2026-09-18T03:41:53.417955+00:00"^^xsd:dateTime,
+            "2026-09-18T03:49:18.844488+00:00"^^xsd:dateTime,
+            "2026-09-18T03:57:24.955264+00:00"^^xsd:dateTime,
+            "2026-09-18T05:09:40.388785+00:00"^^xsd:dateTime ;
+        canon:divergesFrom timeline:prime-canon .
+
+    timeline:quantum_spin_off_01 a canon:AlternateContinuity,
+            canon:Timeline ;
+        rdfs:label "Quantum Spin-Off Reality"^^xsd:string ;
+        canon:createdAt "2026-09-14T14:28:03.492758+00:00"^^xsd:dateTime ;
+        canon:divergesFrom timeline:prime-canon .
+
+    timeline:prime-canon a canon:PrimeCanon,
+            canon:Timeline ;
+        rdfs:label "Prime Canon Timeline"^^xsd:string ;
+        canon:createdAt "2026-09-14T14:28:03.490136+00:00"^^xsd:dateTime .
+}
+
 timeline:quantum_spin_off_01 {
     timeline:quantum_spin_off_01 a canon:AlternateContinuity,
             canon:Timeline ;
@@ -63,18 +89,6 @@ timeline:prime-canon {
 }
 
 timeline:api_test_branch_01 {
-    timeline:api_test_branch_01 a canon:AlternateContinuity,
-            canon:Timeline ;
-        rdfs:label "API Test Branched Timeline"^^xsd:string ;
-        canon:createdAt "2026-09-14T15:31:31.022151+00:00"^^xsd:dateTime,
-            "2026-09-18T03:24:11.020523+00:00"^^xsd:dateTime,
-            "2026-09-18T03:33:34.879367+00:00"^^xsd:dateTime,
-            "2026-09-18T03:38:06.918507+00:00"^^xsd:dateTime,
-            "2026-09-18T03:41:53.417955+00:00"^^xsd:dateTime,
-            "2026-09-18T03:49:18.844488+00:00"^^xsd:dateTime,
-            "2026-09-18T03:57:24.955264+00:00"^^xsd:dateTime ;
-        canon:divergesFrom timeline:prime-canon .
-
     <https://openlore.io/events/BattleOfNova> a canon:NarrativeEvent ;
         canon:hasParticipant <https://openlore.io/characters/ElaraVance>,
             <https://openlore.io/characters/HeroCommander> ;
@@ -89,6 +103,19 @@ timeline:api_test_branch_01 {
         canon:location "Sector 7 Wormhole"^^xsd:string ;
         canon:name "Quantum Rift Divergence"^^xsd:string ;
         canon:timestamp "2155-08-20T18:30:00+00:00"^^xsd:dateTime .
+
+    timeline:api_test_branch_01 a canon:AlternateContinuity,
+            canon:Timeline ;
+        rdfs:label "API Test Branched Timeline"^^xsd:string ;
+        canon:createdAt "2026-09-14T15:31:31.022151+00:00"^^xsd:dateTime,
+            "2026-09-18T03:24:11.020523+00:00"^^xsd:dateTime,
+            "2026-09-18T03:33:34.879367+00:00"^^xsd:dateTime,
+            "2026-09-18T03:38:06.918507+00:00"^^xsd:dateTime,
+            "2026-09-18T03:41:53.417955+00:00"^^xsd:dateTime,
+            "2026-09-18T03:49:18.844488+00:00"^^xsd:dateTime,
+            "2026-09-18T03:57:24.955264+00:00"^^xsd:dateTime,
+            "2026-09-18T05:09:40.388785+00:00"^^xsd:dateTime ;
+        canon:divergesFrom timeline:prime-canon .
 
     <https://openlore.io/characters/ElaraVance> a canon:Character,
             canon:NarrativeEntity ;
@@ -117,31 +144,6 @@ timeline:api_test_branch_01 {
         canon:name "Hero Commander"^^xsd:string ;
         char:birthTime "2140-01-01T00:00:00+00:00"^^xsd:dateTime ;
         char:status "Active"^^xsd:string .
-
-    timeline:prime-canon a canon:PrimeCanon,
-            canon:Timeline ;
-        rdfs:label "Prime Canon Timeline"^^xsd:string ;
-        canon:createdAt "2026-09-14T14:28:03.490136+00:00"^^xsd:dateTime .
-}
-
-{
-    timeline:api_test_branch_01 a canon:AlternateContinuity,
-            canon:Timeline ;
-        rdfs:label "API Test Branched Timeline"^^xsd:string ;
-        canon:createdAt "2026-09-14T15:31:31.022151+00:00"^^xsd:dateTime,
-            "2026-09-18T03:24:11.020523+00:00"^^xsd:dateTime,
-            "2026-09-18T03:33:34.879367+00:00"^^xsd:dateTime,
-            "2026-09-18T03:38:06.918507+00:00"^^xsd:dateTime,
-            "2026-09-18T03:41:53.417955+00:00"^^xsd:dateTime,
-            "2026-09-18T03:49:18.844488+00:00"^^xsd:dateTime,
-            "2026-09-18T03:57:24.955264+00:00"^^xsd:dateTime ;
-        canon:divergesFrom timeline:prime-canon .
-
-    timeline:quantum_spin_off_01 a canon:AlternateContinuity,
-            canon:Timeline ;
-        rdfs:label "Quantum Spin-Off Reality"^^xsd:string ;
-        canon:createdAt "2026-09-14T14:28:03.492758+00:00"^^xsd:dateTime ;
-        canon:divergesFrom timeline:prime-canon .
 
     timeline:prime-canon a canon:PrimeCanon,
             canon:Timeline ;

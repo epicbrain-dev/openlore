@@ -28,12 +28,27 @@
       "build/**/*",
       "package.json"
     ],
+    "afterPack": "electron/afterPack.cjs",
     "mac": {
       "category": "public.app-category.graphics-design",
       "icon": "build/icon.png",
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false,
+      "entitlements": "build/entitlements.mac.plist",
+      "entitlementsInherit": "build/entitlements.mac.plist",
       "target": [
-        "dmg",
-        "zip"
+        {
+          "target": "dmg",
+          "arch": [
+            "universal"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "universal"
+          ]
+        }
       ]
     },
     "win": {

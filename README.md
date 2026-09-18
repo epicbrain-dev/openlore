@@ -204,12 +204,22 @@ Pre-compiled standalone desktop binaries with built-in engine bootstrapping and 
 | Distribution Package | Target Environment | Description |
 |---|---|---|
 | `OpenLore.Studio.Setup.2.0.1.exe` | Windows 10 / 11 64-bit | Turnkey NSIS installer with bundled engine bootstrapper |
-| `OpenLore.Studio-2.0.1-arm64.dmg` | macOS Apple Silicon | Standalone Electron Desktop App for Apple Silicon (M1/M2/M3/M4) |
+| `OpenLore.Studio-2.0.1-universal.dmg` | macOS (Apple Silicon & Intel) | Universal Electron Desktop App for Apple Silicon (M1–M4) and Intel x86_64 |
 | `OpenLore.Studio-2.0.1.AppImage` | Linux x86_64 | Portable Linux desktop binary with bundled Chromium runtime |
 | `openlore-studio_2.0.1_amd64.deb` | Ubuntu / Debian | Native Debian package with desktop launcher & MIME associations |
 
 > [!TIP]
 > **Zero Separate Downloads**: You no longer need to download separate plugin zip archives or Python wheels. The OpenLore Studio desktop application embeds the core engine wheel and automatically scaffolds all DCC bridges (**Blender**, **Maya**, **Houdini**, **Unreal Engine 5**, and **Unity**) via the in-app **1-Click Engine Bootstrapper**.
+
+> [!NOTE]
+> **First-Time Launch & Platform Security Guidance**:
+> * **macOS**: If Gatekeeper displays *"OpenLore Studio is damaged and can't be opened"*, this is standard macOS quarantine blocking unsigned open-source binaries. Run the following command in Terminal to clear quarantine:
+>   ```bash
+>   xattr -cr "/Applications/OpenLore Studio.app"
+>   ```
+>   *(Or approve under **System Settings → Privacy & Security → Open Anyway**).*
+> * **Windows**: If Microsoft Defender SmartScreen warns *"Windows protected your PC"*, click **"More info"** &rarr; **"Run anyway"**.
+> * **Linux**: Ensure execution permissions are enabled for the AppImage (`chmod +x OpenLore.Studio-*.AppImage`) or install the `.deb` package via `sudo dpkg -i openlore-studio_*.deb`.
 
 ### Step 2: Launch OpenLore Studio
 
