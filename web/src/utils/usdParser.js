@@ -243,9 +243,11 @@ export function buildThreeMeshFromUsdPrim(prim) {
   }
 
   mesh.userData = {
+    primPath: prim.path,
     usdPath: prim.path,
     usdType: prim.type,
     attributes: prim.attributes,
+    origMaterial: material,
   };
 
   return mesh;

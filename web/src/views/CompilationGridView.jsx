@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { apiUrl } from '../utils/api';
 import { Play, CheckCircle2, Clock, Layers, Package, Film, Gamepad2, Database, Download } from 'lucide-react';
 
 export default function CompilationGridView() {
@@ -56,7 +57,7 @@ export default function CompilationGridView() {
       if (selectedTargets.unreal) targets.push('unreal');
       if (selectedTargets.unity) targets.push('unity');
       if (selectedTargets.cinematic_cache) targets.push('cinematic-cache');
-      await fetch('/api/compile', {
+      await fetch(apiUrl('/api/compile'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

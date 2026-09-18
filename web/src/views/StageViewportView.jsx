@@ -1,217 +1,165 @@
 import React, { useState } from 'react';
 import ThreeViewport from '../components/ThreeViewport';
+import USDOutliner from '../components/USDOutliner';
+import USDAttributeInspector from '../components/USDAttributeInspector';
 import { parseUSDA, getDemoUSDA } from '../utils/usdParser';
-import { Layers, Box, Film, Gamepad2, ChevronRight, Eye, Sparkles, Cpu } from 'lucide-react';
+import {
+  Layers,
+  Sliders,
+  Camera,
+  Maximize2,
+  Minimize2,
+  Tv,
+  Film,
+  Sparkles,
+  Eye,
+} from 'lucide-react';
 
-export default function StageViewportView({ stages = [] }) {
+export default function StageViewportView({
+  stageUri = 'openlore://stages/hero_scene.usda',
+  currentFrame = 1042,
+}) {
   const [rigMode, setRigMode] = useState('cinematic_cache');
   const [selectedPrimPath, setSelectedPrimPath] = useState('/World/Characters/HeroArmor');
+  const [showOutliner, setShowOutliner] = useState(true);
+  const [showInspector, setShowInspector] = useState(true);
+  const [shadingMode, setShadingMode] = useState('usd_preview'); // 'usd_preview' | 'wireframe' | 'clay'
+  const [hiddenPrims, setHiddenPrims] = useState({});
+  const [transforms, setTransforms] = useState({
+    tx: 0.0,
+    ty: 1.25,
+    tz: -3.4,
+    rx: 0.0,
+    ry: 24.5,
+    rz: 0.0,
+    sx: 1.0,
+    sy: 1.0,
+    sz: 1.0,
+  });
   const [stage] = useState(() => parseUSDA(getDemoUSDA()));
+
+  const handleToggleVisibility = (path) => {
+    setHiddenPrims((prev) => ({ ...prev, [path]: !prev[path] }));
+  };
+
+  const handleTransformChange = (key, val) => {
+    setTransforms((prev) => ({ ...prev, [key]: val }));
+  };
 
   const prims = stage.getAllPrims();
   const activePrim = stage.getPrim(selectedPrimPath) || prims[0];
 
   return (
-    <div className="flex-1 flex gap-4 p-4 overflow-hidden h-[calc(100vh-72px)]">
-      {/* Left 3D Viewport Panel */}
-      <div className="flex-1 flex flex-col gap-3 min-w-0">
-        <div className="flex items-center justify-between bg-neutral-900/60 p-3 rounded-xl border border-neutral-800">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-indigo-500/10 text-indigo-400 rounded-lg border border-indigo-500/20">
-              <Box className="w-5 h-5" />
+    <div className="flex-1 flex overflow-hidden h-full bg-neutral-950 font-sans">
+      {/* Left: USD Scenegraph Outliner */}
+      {showOutliner && (
+        <USDOutliner
+          prims={prims}
+          selectedPrimPath={selectedPrimPath}
+          onSelectPrim={setSelectedPrimPath}
+          stageUri={stageUri}
+          hiddenPrims={hiddenPrims}
+          onToggleVisibility={handleToggleVisibility}
+        />
+      )}
+
+      {/* Center: 3D Viewport with DCC HUD Overlays */}
+      <div className="flex-1 flex flex-col min-w-0 h-full relative overflow-hidden bg-neutral-950">
+        {/* Top Viewport Floating HUD Header */}
+        <div className="h-10 bg-neutral-900/80 backdrop-blur-md border-b border-neutral-800/80 px-3 flex items-center justify-between z-10 shrink-0 font-mono text-xs min-w-0">
+          {/* Left: Camera & Lens Info */}
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            <button
+              onClick={() => setShowOutliner((v) => !v)}
+              className={`p-1 rounded text-xs transition-colors cursor-pointer shrink-0 ${
+                showOutliner ? 'text-indigo-400 bg-neutral-800' : 'text-neutral-500 hover:text-neutral-300'
+              }`}
+              title={showOutliner ? 'Hide Outliner' : 'Show Outliner'}
+            >
+              <Layers className="w-3.5 h-3.5" />
+            </button>
+
+            <div className="flex items-center gap-1.5 text-neutral-300 min-w-0 truncate">
+              <Camera className="w-3.5 h-3.5 text-sky-400 shrink-0" />
+              <span className="font-semibold text-white truncate">RenderCam_50mm</span>
+              <span className="text-neutral-500 text-[11px] hidden sm:inline shrink-0">(f/2.8 • 50mm)</span>
             </div>
-            <div>
-              <h2 className="text-sm font-semibold text-neutral-100">Live Stage Composition Viewport</h2>
-              <p className="text-xs text-neutral-400 font-mono">openlore://stages/hero_scene.usda</p>
+
+            <div className="hidden xl:flex items-center gap-1.5 text-neutral-400 text-[11px] shrink-0">
+              <span className="text-neutral-700">&bull;</span>
+              <Tv className="w-3.5 h-3.5 text-emerald-400" />
+              <span>4096 × 1714 (Scope)</span>
             </div>
           </div>
 
-          {/* Dynamic Dual-Rig Variant Switcher */}
-          <div className="flex items-center gap-1 bg-neutral-950 p-1 rounded-lg border border-neutral-800">
-            <span className="text-[11px] font-mono text-neutral-400 px-2">VariantSet: rigMode</span>
+          {/* Center: Shading Mode Toggles */}
+          <div className="flex items-center gap-0.5 bg-neutral-950 p-0.5 rounded border border-neutral-800 text-[10px] shrink-0">
+            {[
+              { id: 'usd_preview', label: 'USD Shaded' },
+              { id: 'wireframe', label: 'Wireframe' },
+              { id: 'clay', label: 'Clay' },
+            ].map((m) => (
+              <button
+                key={m.id}
+                onClick={() => setShadingMode(m.id)}
+                className={`px-1.5 sm:px-2 py-0.5 rounded transition-colors cursor-pointer ${
+                  shadingMode === m.id
+                    ? 'bg-neutral-800 text-amber-300 font-semibold shadow-sm'
+                    : 'text-neutral-400 hover:text-neutral-200'
+                }`}
+              >
+                {m.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Right: Color Management & Inspector Toggle */}
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            <span className="text-[10px] px-1.5 py-0.5 rounded bg-neutral-950 text-indigo-300 border border-indigo-500/30 hidden sm:inline">
+              ACEScg
+            </span>
+
             <button
-              onClick={() => setRigMode('cinematic_cache')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all cursor-pointer ${
-                rigMode === 'cinematic_cache'
-                  ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-sm'
-                  : 'text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800/60'
+              onClick={() => setShowInspector((v) => !v)}
+              className={`p-1 rounded text-xs transition-colors cursor-pointer ${
+                showInspector ? 'text-amber-400 bg-neutral-800' : 'text-neutral-500 hover:text-neutral-300'
               }`}
+              title={showInspector ? 'Hide Inspector' : 'Show Inspector'}
             >
-              <Film className="w-3.5 h-3.5" />
-              cinematic_cache
-            </button>
-            <button
-              onClick={() => setRigMode('game_collision')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all cursor-pointer ${
-                rigMode === 'game_collision'
-                  ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-sm'
-                  : 'text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800/60'
-              }`}
-            >
-              <Gamepad2 className="w-3.5 h-3.5" />
-              game_collision
+              <Sliders className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>
 
-        {/* 3D Canvas */}
-        <div className="flex-1 min-h-0">
+        {/* 3D Canvas Canvas */}
+        <div className="flex-1 relative min-h-0 min-w-0 w-full overflow-hidden">
           <ThreeViewport
             rigMode={rigMode}
             selectedPrim={selectedPrimPath}
             onPrimSelect={setSelectedPrimPath}
+            currentFrame={currentFrame}
+            shadingMode={shadingMode}
+            hiddenPrims={hiddenPrims}
+            activeTransforms={transforms}
           />
-        </div>
-      </div>
 
-      {/* Right: USD Prim Scenegraph Inspector */}
-      <div className="w-84 flex flex-col gap-4 bg-neutral-900/80 backdrop-blur-md p-4 rounded-xl border border-neutral-800 overflow-y-auto shadow-xl">
-        <div>
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <Layers className="w-4 h-4 text-indigo-400" />
-              <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-100">
-                USD Prim Scenegraph Inspector
-              </h3>
-            </div>
-            <span className="text-[10px] bg-indigo-950/80 border border-indigo-700 text-indigo-300 px-1.5 py-0.5 rounded font-mono flex items-center gap-1">
-              <Cpu className="w-3 h-3" /> WASM AST
-            </span>
-          </div>
-
-          <p className="text-[11px] text-neutral-400 mb-3">
-            Interactive OpenUSD stage hierarchy parsed client-side via WebAssembly.
-          </p>
-
-          {/* Hierarchy Scenegraph Tree */}
-          <div className="flex flex-col gap-1">
-            {prims.map((prim) => {
-              const isSelected = selectedPrimPath === prim.path;
-              const depth = (prim.path.match(/\//g) || []).length;
-              return (
-                <button
-                  key={prim.path}
-                  onClick={() => setSelectedPrimPath(prim.path)}
-                  style={{ paddingLeft: `${Math.max(8, depth * 12)}px` }}
-                  className={`text-left px-2.5 py-2 rounded-lg text-xs font-mono transition-all flex items-center justify-between cursor-pointer ${
-                    isSelected
-                      ? 'bg-indigo-600/30 border border-indigo-500/60 text-indigo-200 font-semibold shadow-sm'
-                      : 'bg-neutral-950/50 hover:bg-neutral-800/60 text-neutral-300 border border-neutral-800/60'
-                  }`}
-                >
-                  <div className="flex items-center gap-1.5 truncate">
-                    <ChevronRight className={`w-3 h-3 shrink-0 ${isSelected ? 'text-indigo-400' : 'text-neutral-500'}`} />
-                    <span className="truncate">{prim.name}</span>
-                  </div>
-                  <span className="text-[10px] text-neutral-400 bg-neutral-900 border border-neutral-800 px-1.5 py-0.5 rounded ml-2 whitespace-nowrap">
-                    {prim.type}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Selected Prim Details Inspector */}
-        {activePrim && (
-          <div className="pt-3 border-t border-neutral-800">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-300 mb-2 flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-              <span>Selected Prim Attributes</span>
-            </h3>
-            <div className="bg-neutral-950 p-3 rounded-lg border border-neutral-800/80 text-xs font-mono space-y-2.5">
-              <div>
-                <div className="text-[10px] text-neutral-500">Prim Path</div>
-                <div className="text-indigo-300 font-semibold truncate">{activePrim.path}</div>
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <div className="text-[10px] text-neutral-500">Type</div>
-                  <div className="text-neutral-200 font-medium">{activePrim.type}</div>
-                </div>
-                <div>
-                  <div className="text-[10px] text-neutral-500">Rig Variant</div>
-                  <div className={rigMode === 'cinematic_cache' ? 'text-amber-400 font-bold' : 'text-emerald-400 font-bold'}>
-                    {rigMode}
-                  </div>
-                </div>
-              </div>
-
-              {activePrim.type === 'Mesh' ? (
-                <div className="grid grid-cols-2 gap-2 pt-1 border-t border-neutral-900">
-                  <div>
-                    <div className="text-[10px] text-neutral-500">Vertices (points)</div>
-                    <div className="text-emerald-400 font-bold">{activePrim.attributes.points?.length || 0}</div>
-                  </div>
-                  <div>
-                    <div className="text-[10px] text-neutral-500">Face Indices</div>
-                    <div className="text-emerald-400 font-bold">{activePrim.attributes.faceVertexIndices?.length || 0}</div>
-                  </div>
-                </div>
-              ) : (
-                <div className="pt-1 border-t border-neutral-900">
-                  <div className="text-[10px] text-neutral-500">Scenegraph Role</div>
-                  <div className="text-xs text-neutral-300 font-medium">
-                    {activePrim.type === 'Camera'
-                      ? 'Virtual CineCamera Prim (Live Link Stream Target)'
-                      : `Transform Grouping (${activePrim.children?.length || 0} sub-prims)`}
-                  </div>
-                </div>
-              )}
-
-              {activePrim.attributes.displayColor && (
-                <div className="pt-1 border-t border-neutral-900 flex items-center justify-between">
-                  <span className="text-[10px] text-neutral-500">displayColor</span>
-                  <div className="flex items-center gap-2">
-                    <span
-                      className="w-3.5 h-3.5 rounded-full inline-block border border-neutral-600 shadow-sm"
-                      style={{
-                        backgroundColor: `rgb(${Math.round(activePrim.attributes.displayColor[0] * 255)}, ${Math.round(activePrim.attributes.displayColor[1] * 255)}, ${Math.round(activePrim.attributes.displayColor[2] * 255)})`
-                      }}
-                    />
-                    <span className="text-[10px] text-neutral-400">
-                      [{activePrim.attributes.displayColor.map(n => n.toFixed(2)).join(', ')}]
-                    </span>
-                  </div>
-                </div>
-              )}
-
-              {activePrim.attributes.extent && (
-                <div className="pt-1 border-t border-neutral-900">
-                  <div className="text-[10px] text-neutral-500">Bounding Extent</div>
-                  <div className="text-[10px] text-neutral-400 truncate">
-                    min: ({activePrim.attributes.extent[0]?.join(', ')}) max: ({activePrim.attributes.extent[1]?.join(', ')})
-                  </div>
-                </div>
-              )}
-
-              <div className="pt-1 border-t border-neutral-900">
-                <div className="text-[10px] text-neutral-500">CAS Hash (BLAKE3)</div>
-                <div className="text-indigo-400 text-[10px] truncate">9f86d081884c7d659a2feaa0c55ad015...</div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Sublayers Stack */}
-        <div className="pt-3 border-t border-neutral-800">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-300 mb-2 flex items-center justify-between">
-            <span>Sublayer Stack</span>
-            <span className="text-[10px] text-neutral-500 font-normal font-mono">L.I.F.O. Priority</span>
-          </h3>
-          <div className="space-y-1.5 text-xs font-mono">
-            <div className="bg-neutral-950 p-2 rounded border border-neutral-800/70 text-neutral-300">
-              <span className="text-indigo-400">0:</span> ./quarantine/promoted_prop.usda
-            </div>
-            <div className="bg-neutral-950 p-2 rounded border border-neutral-800/70 text-neutral-300">
-              <span className="text-indigo-400">1:</span> ./stages/lighting_set.usda
-            </div>
-            <div className="bg-neutral-950 p-2 rounded border border-neutral-800/70 text-neutral-300">
-              <span className="text-indigo-400">2:</span> ./stages/character_base.usda
-            </div>
+          <div className="absolute bottom-2 right-2 sm:bottom-3 sm:right-3 pointer-events-none text-[9px] sm:text-[10px] font-mono text-neutral-400 bg-neutral-950/80 px-2 py-0.5 rounded border border-neutral-800/80 backdrop-blur-sm hidden sm:block">
+            Tumble: <span className="text-neutral-200">LMB</span> | Pan: <span className="text-neutral-200">MMB</span> | Zoom: <span className="text-neutral-200">Wheel</span>
           </div>
         </div>
       </div>
+
+      {/* Right: USD Attribute Inspector */}
+      {showInspector && (
+        <USDAttributeInspector
+          primPath={selectedPrimPath}
+          primType={activePrim ? activePrim.type : 'Mesh'}
+          rigMode={rigMode}
+          onRigModeChange={setRigMode}
+          transforms={transforms}
+          onTransformChange={handleTransformChange}
+        />
+      )}
     </div>
   );
 }

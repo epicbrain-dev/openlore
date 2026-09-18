@@ -16,7 +16,7 @@
   <a href="#kafka"><img src="https://img.shields.io/badge/Streaming-Kafka%20%7C%20CRDT-231F20.svg?logo=apachekafka&logoColor=white" alt="Kafka CRDT" /></a>
   <a href="#opa"><img src="https://img.shields.io/badge/Policy-OPA%20Rego-green.svg" alt="OPA Rego" /></a>
   <a href="#temporal"><img src="https://img.shields.io/badge/Grid-Temporal%20%7C%20Argo-red.svg" alt="Temporal / Argo" /></a>
-  <a href="#tests"><img src="https://img.shields.io/badge/Tests-151%20Passing-brightgreen.svg" alt="151 Tests Passing" /></a>
+  <a href="#tests"><img src="https://img.shields.io/badge/Tests-152%20Passing-brightgreen.svg" alt="152 Tests Passing" /></a>
 </p>
 
 <p align="center">
@@ -113,14 +113,34 @@ Modern entertainment franchises span feature films, AAA games, television series
 * **Temporal Orchestration & Argo DAGs**: Automated downstream compilation into targeted game engine packages (`.pak` for Unreal Engine 5, `.unitypackage` for Unity 6) and cinematic USD point caches.
 * **Relational Production Catalog**: Industrial ledger backed by SQLite (local development) or PostgreSQL 16 (staging/production) with indexed lookups on stage URI, build type, and BLAKE3 CAS hash.
 
-### 8. OpenLore Studio Cockpit (Web UI)
-* Full-featured React 19 single-page application served directly by OpenLore embedded web server:
-  - **3D Stage Viewport**: In-browser Three.js viewport powered by a client-side OpenUSD WebAssembly parser and Prim Scenegraph Inspector.
-  - **Narrative Multiverse**: Timeline manager, SHACL integrity monitor, and interactive SPARQL Graph RAG narrative assistant.
-  - **Studio Collaboration**: Multi-studio vector clock monitors, CRDT broadcaster, network severance simulator, and UE5 Live Link status.
-  - **Partner Enclave**: 1%–100% IP decimation controls, presets, quarantine linter, and 1-Click TD promotion gate.
-  - **Provenance & OPA**: Cryptographic signature verifier, partner royalty progress bars, and harvested USD DAG tree.
-  - **Compilation Grid**: Multi-target engine selection, live Temporal activity tracker, and Central Production Catalog.
+### 8. OpenLore Studio Desktop App & Cockpit (VFX & 3D Animation Pipeline)
+OpenLore includes a standalone cross-platform desktop application powered by **Electron 44**, **React 19**, and **Three.js**, alongside the embedded browser cockpit. Designed specifically for **visual effects producers and 3D animators**, it mirrors the dark neutral graphite aesthetic and muscle memory of Maya, Houdini Solaris, Unreal Engine 5, and ShotGrid:
+
+* **Cross-Platform Desktop Runtime**:
+  - **macOS, Windows & Linux**: Pre-built native bundles (`.app` / `.dmg`, `.exe`, `.AppImage`) featuring native OS file pickers, window traffic light integration, and offline fallback.
+  - **Local Backend Supervisor**: Automatically supervises and connects to the local Python REST daemon (`http://127.0.0.1:8000`), proxying `file:///api/*` transparently in packaged builds.
+  - **Native Drag & Click Isolation**: Header drag regions (`-webkit-app-region: drag`) are isolated to empty background regions so mouse clicks on tabs, buttons, dropdowns, and inputs are never captured by the OS window manager.
+
+* **9 Production Workspaces**:
+  1. **3D Layout & Staging** (`USD 24.11`): Real-time Three.js stage viewport with OpenUSD Prim Scenegraph Outliner, raycast mesh picking with gold selection bounding boxes (`THREE.BoxHelper`), live shading toggles (**USD Shaded**, **Wireframe**, **Lookdev Clay**), and Maya/Houdini-style Channel Box numeric matrix transforms (`Translate`, `Rotate`, `Scale`).
+  2. **Animation & Scenegraph** (`24 FPS`): Dedicated character skeleton and joint hierarchy viewport, interactive Graph Editor with cubic Bézier curves and tangent handles (**Smooth**, **Linear**, **Step**), Dope Sheet mode, Pose Library with 1-click pose application (`Combat Idle`, `Sandworm Dodge`, `Crysknife Strike`, `Tactical Landing`), FK/IK blending sliders, dynamic Squash & Stretch scaling, and multi-frame Onion Skinning (ghosting in cyan/magenta).
+  3. **Shot Review (Producer)** (`ShotGrid`): Sequence `SQ042` shot breakdown tracking progress status badges (`In Progress`, `In Review`, `Approved`, `Blocked`), frame ranges, lead artists, thumbnails, and 1-click stage loading.
+  4. **Lookdev & Shading Studio** (`MaterialX`): 360° turntable stage with ACEScg lighting presets (**Studio Neutral 5600K**, **Golden Sunset 3200K**, **Cyberpunk LED Volume**, **High-Key Rim**) and real-time MaterialX/PBR parameters (Base Color, Metallic, Roughness, Normal, IOR).
+  5. **Multi-Studio Sync** (`CRDT`): Real-time CRDT vector clock topology, live mutation broadcast, network severance simulator, and UE5 Live Link status.
+  6. **Render Farm & Grid** (`Deadline`): GPU farm dispatch for AWS Deadline 10 and ASWF OpenCue, multi-target engine compilers (.pak, .unitypackage, .usdc), and central production catalog ledger.
+  7. **Narrative Multiverse** (`SHACL`): W3C RDF 1.1 temporal lore graph, SHACL continuity validation, and interactive SPARQL Graph RAG narrative assistant.
+  8. **Provenance Ledger** (`BLAKE3`): Cryptographic BLAKE3 CAS hashes, HMAC-SHA256 signatures, harvested USD DAG trees, and OPA Rego automated royalty splits.
+  9. **Partner Enclave** (`Cleanroom`): Outbound 1%–100% IP decimation controls, quarantine pre-flight linter, TD 1-click promotion gate, and eBPF zero-egress kernel security.
+
+* **Hollywood Standard Transport Timeline**:
+  - Starts at standard Hollywood frame `1001` through `1150` running at **24.00 FPS**.
+  - SMPTE timecode display (e.g. `00:00:43:10`), diamond keyframe markers (`◆`), spacebar play/pause, and real-time frame scrubbing synchronized with viewport deformations and turntable animation.
+
+* **Accessible Navigation & Quick Switcher**:
+  - Horizontal scroll chevrons (`<ChevronLeft />` and `<ChevronRight />`) ensuring all tabs are reachable at any window aspect ratio.
+  - Active tab auto-scrolls into the center of the viewport upon selection.
+  - Quick **"Workspaces (9) ▾"** dropdown button on the navigation bar offering instantaneous 1-click access to any workspace.
+  - Standard DCC hotkeys: `⌥1` through `⌥9` (or `Alt+1` through `Alt+9`) for instant keyboard switching between workspaces.
 
 ---
 
@@ -128,8 +148,9 @@ Modern entertainment franchises span feature films, AAA games, television series
 
 ### Prerequisites
 * **Python**: `3.11` or higher.
-* **Modern Web Browser**: Chrome, Firefox, Safari, or Edge.
-* *Note: Pre-built web assets are included in `web/dist`—no Node.js installation is required to run the cockpit.*
+* **Modern Web Browser**: Chrome, Firefox, Safari, or Edge (for Web Cockpit).
+* **Node.js**: `18+` (only needed if compiling/packaging the Electron desktop app from source).
+* *Note: Pre-built web assets are included in `web/dist`—no Node.js installation is required to run the cockpit via python.*
 
 ### 🚀 1-Line Turnkey Installer (Recommended)
 
@@ -178,10 +199,14 @@ pip install -e ".[dev]"
 
 ### Pre-Packaged Releases & DCC Sidecars
 
-Pre-compiled packages and standalone DCC bridge archives are available on each [GitHub Release](https://github.com/epicbrain-dev/openlore/releases/latest):
+Pre-compiled packages, standalone desktop binaries, and DCC bridge archives are available on each [GitHub Release](https://github.com/epicbrain-dev/openlore/releases/latest):
 
 | Distribution Package | Target Environment | Description |
 |---|---|---|
+| `OpenLore-Studio-1.5.0-arm64.dmg` | macOS Apple Silicon | Standalone Electron Desktop App for Apple Silicon (M1/M2/M3/M4) |
+| `OpenLore-Studio-1.5.0-x64.dmg` | macOS Intel | Standalone Electron Desktop App for Intel Macs |
+| `OpenLore-Studio-Setup-1.5.0.exe` | Windows 10 / 11 | Turnkey NSIS installer for Windows 64-bit |
+| `OpenLore-Studio-1.5.0.AppImage` | Linux x86_64 | Portable Linux desktop binary with bundled Chromium runtime |
 | `openlore-1.5.0-py3-none-any.whl` | Python 3.9+ | Universal wheel containing CLI, server, and core SDK |
 | `openlore-installer-unix-v1.5.0.tar.gz` | macOS / Linux | Turnkey installer bundle with `install.sh` & isolated runtime |
 | `openlore-installer-windows-v1.5.0.zip` | Windows 10/11 | Turnkey installer bundle with `install.ps1` & PowerShell launcher |
@@ -192,9 +217,17 @@ Pre-compiled packages and standalone DCC bridge archives are available on each [
 | `openlore-unity-livelink-v1.5.0.zip` | Unity 6 / 2023 LTS | Unity Package Manager (UPM) client |
 | `openlore-cpp-sdk-v1.5.0.zip` | C++17 Engines / DCCs | Zero-dependency header-only C++ SDK (`openlore.hpp`) |
 
+### Step 2: Launch OpenLore Studio
 
-### Step 2: Launch the Studio Cockpit
+**Option A: Standalone Desktop App (Electron)**
+```bash
+cd web
+npm run electron:dev    # Live development mode with Vite hot module reload
+# or package production desktop binary:
+npm run electron:pack   # Creates dist-electron/mac-arm64/OpenLore Studio.app
+```
 
+**Option B: Web Cockpit & REST API Server**
 Start the embedded REST API server and web application:
 ```bash
 openlore web --port 8000

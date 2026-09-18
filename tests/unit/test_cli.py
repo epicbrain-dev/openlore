@@ -128,6 +128,13 @@ class TestOpenLoreCLI(unittest.TestCase):
         self.assertIn("OpenLore System Health & Environment Doctor", out)
         self.assertIn("Operating System:", out)
 
+    def test_cli_studio_command(self) -> None:
+        from unittest.mock import patch
+        with patch("subprocess.Popen") as mock_popen, patch("webbrowser.open"), patch("openlore.server.api.run_server"):
+            exit_code, out = self._run_cli(["studio"])
+            self.assertEqual(exit_code, 0)
+            self.assertIn("OpenLore Studio", out)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -1,9 +1,18 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { parseUSDA, buildThreeMeshFromUsdPrim, getDemoUSDA } from '../utils/usdParser';
+import { getWsUrl } from '../utils/api';
 import { Layers, Cpu, Box, Film, Gamepad2, Radio, Activity, Camera } from 'lucide-react';
 
-export default function ThreeViewport({ rigMode = 'cinematic_cache', onPrimSelect, selectedPrim }) {
+export default function ThreeViewport({
+  rigMode = 'cinematic_cache',
+  onPrimSelect,
+  selectedPrim = '/World/Characters/HeroArmor',
+  currentFrame = 1042,
+  shadingMode = 'usd_preview',
+  hiddenPrims = {},
+  activeTransforms = null,
+}) {
   const containerRef = useRef(null);
   const sceneRef = useRef(null);
   const cameraRef = useRef(null);
@@ -14,9 +23,11 @@ export default function ThreeViewport({ rigMode = 'cinematic_cache', onPrimSelec
   const skeletonRef = useRef(null);
   const reqIdRef = useRef(null);
   const simRef = useRef(null);
+  const selectionBoxRef = useRef(null);
 
   const [wsConnected, setWsConnected] = useState(false);
   const [viewportEngine, setViewportEngine] = useState('usd_wasm'); // 'usd_wasm' | 'standard'
+  const [showEngineDetails, setShowEngineDetails] = useState(false);
   const [simulating, setSimulating] = useState(false);
   const [telemetry, setTelemetry] = useState({
     subject: 'Camera_StageA',
@@ -176,8 +187,10 @@ export default function ThreeViewport({ rigMode = 'cinematic_cache', onPrimSelec
     };
     updateCameraPos();
 
+    let hasMoved = false;
     const onMouseDown = (e) => {
       isDragging = true;
+      hasMoved = false;
       prevMouseX = e.clientX;
       prevMouseY = e.clientY;
     };
@@ -185,13 +198,32 @@ export default function ThreeViewport({ rigMode = 'cinematic_cache', onPrimSelec
       if (!isDragging) return;
       const dx = e.clientX - prevMouseX;
       const dy = e.clientY - prevMouseY;
+      if (Math.abs(dx) > 2 || Math.abs(dy) > 2) hasMoved = true;
       azimuth -= dx * 0.008;
       polar = Math.max(0.1, Math.min(Math.PI / 2 - 0.05, polar + dy * 0.008));
       prevMouseX = e.clientX;
       prevMouseY = e.clientY;
       updateCameraPos();
     };
-    const onMouseUp = () => { isDragging = false; };
+    const onMouseUp = (e) => {
+      isDragging = false;
+      if (!hasMoved && onPrimSelect && container) {
+        const rect = container.getBoundingClientRect();
+        const mouse = new THREE.Vector2(
+          ((e.clientX - rect.left) / rect.width) * 2 - 1,
+          -((e.clientY - rect.top) / rect.height) * 2 + 1
+        );
+        const raycaster = new THREE.Raycaster();
+        raycaster.setFromCamera(mouse, camera);
+        const hits = raycaster.intersectObjects(usdGroup.children, true);
+        if (hits.length > 0) {
+          const hitObj = hits[0].object;
+          if (hitObj.userData?.primPath) {
+            onPrimSelect(hitObj.userData.primPath);
+          }
+        }
+      }
+    };
     const onWheel = (e) => {
       e.preventDefault();
       radius = Math.max(2.5, Math.min(18, radius + e.deltaY * 0.008));
@@ -203,14 +235,19 @@ export default function ThreeViewport({ rigMode = 'cinematic_cache', onPrimSelec
     window.addEventListener('mouseup', onMouseUp);
     container.addEventListener('wheel', onWheel, { passive: false });
 
+    // Responsive Canvas Resizing using ResizeObserver
     const handleResize = () => {
-      if (!container) return;
-      const w = container.clientWidth;
-      const h = container.clientHeight;
-      camera.aspect = w / h;
-      camera.updateProjectionMatrix();
-      renderer.setSize(w, h);
+      if (!container || !camera || !renderer) return;
+      const w = container.clientWidth || 800;
+      const h = container.clientHeight || 500;
+      if (w > 0 && h > 0) {
+        camera.aspect = w / h;
+        camera.updateProjectionMatrix();
+        renderer.setSize(w, h);
+      }
     };
+    const resizeObserver = new ResizeObserver(handleResize);
+    resizeObserver.observe(container);
     window.addEventListener('resize', handleResize);
 
     // Animation Loop
@@ -230,6 +267,7 @@ export default function ThreeViewport({ rigMode = 'cinematic_cache', onPrimSelec
 
     return () => {
       cancelAnimationFrame(reqIdRef.current);
+      resizeObserver.disconnect();
       container.removeEventListener('mousedown', onMouseDown);
       window.removeEventListener('mousemove', onMouseMove);
       window.removeEventListener('mouseup', onMouseUp);
@@ -238,6 +276,94 @@ export default function ThreeViewport({ rigMode = 'cinematic_cache', onPrimSelec
       renderer.dispose();
     };
   }, []);
+
+  // Selection Highlight Outline
+  useEffect(() => {
+    if (!sceneRef.current || !usdGroupRef.current) return;
+    if (selectionBoxRef.current) {
+      sceneRef.current.remove(selectionBoxRef.current);
+      selectionBoxRef.current.geometry && selectionBoxRef.current.geometry.dispose();
+      selectionBoxRef.current = null;
+    }
+
+    if (!selectedPrim) return;
+
+    let targetMesh = null;
+    usdGroupRef.current.traverse((child) => {
+      if (child.isMesh && (child.userData?.primPath === selectedPrim || child.name === selectedPrim)) {
+        targetMesh = child;
+      }
+    });
+
+    if (targetMesh) {
+      const box = new THREE.BoxHelper(targetMesh, 0xf59e0b);
+      box.material.linewidth = 2;
+      sceneRef.current.add(box);
+      selectionBoxRef.current = box;
+    }
+  }, [selectedPrim]);
+
+  // Dynamic Current Frame Procedural Turntable Animation
+  useEffect(() => {
+    if (!usdGroupRef.current) return;
+    const progress = (currentFrame - 1001) / 149; // 0.0 to 1.0
+    usdGroupRef.current.rotation.y = progress * Math.PI * 0.4;
+
+    if (selectionBoxRef.current) {
+      selectionBoxRef.current.update();
+    }
+  }, [currentFrame]);
+
+  // Shading Mode Toggles (USD Preview, Wireframe, Clay)
+  useEffect(() => {
+    if (!usdGroupRef.current) return;
+    usdGroupRef.current.traverse((child) => {
+      if (child.isMesh) {
+        if (shadingMode === 'wireframe') {
+          child.material = new THREE.MeshBasicMaterial({ color: 0x38bdf8, wireframe: true });
+        } else if (shadingMode === 'clay') {
+          child.material = new THREE.MeshStandardMaterial({ color: 0xa1a1aa, roughness: 0.85, metalness: 0.05 });
+        } else {
+          // Restore original PBR material
+          if (child.userData?.origMaterial) {
+            child.material = child.userData.origMaterial;
+          }
+        }
+      }
+    });
+  }, [shadingMode]);
+
+  // Outliner Visibility Sync
+  useEffect(() => {
+    if (!usdGroupRef.current) return;
+    usdGroupRef.current.traverse((child) => {
+      if (child.isMesh && child.userData?.primPath) {
+        child.visible = !hiddenPrims[child.userData.primPath];
+      }
+    });
+    if (selectionBoxRef.current) {
+      selectionBoxRef.current.update();
+    }
+  }, [hiddenPrims]);
+
+  // Channel Box Active Transforms Manipulation
+  useEffect(() => {
+    if (!usdGroupRef.current || !selectedPrim || !activeTransforms) return;
+    usdGroupRef.current.traverse((child) => {
+      if (child.isMesh && (child.userData?.primPath === selectedPrim || child.name === selectedPrim)) {
+        child.position.set(activeTransforms.tx, activeTransforms.ty, activeTransforms.tz);
+        child.rotation.set(
+          (activeTransforms.rx * Math.PI) / 180,
+          (activeTransforms.ry * Math.PI) / 180,
+          (activeTransforms.rz * Math.PI) / 180
+        );
+        child.scale.set(activeTransforms.sx, activeTransforms.sy, activeTransforms.sz);
+      }
+    });
+    if (selectionBoxRef.current) {
+      selectionBoxRef.current.update();
+    }
+  }, [activeTransforms, selectedPrim]);
 
   // Toggle Viewport Engine Visibility
   useEffect(() => {
@@ -271,9 +397,7 @@ export default function ThreeViewport({ rigMode = 'cinematic_cache', onPrimSelec
 
   // WebSocket Telemetry Hook
   useEffect(() => {
-    const isHttps = window.location.protocol === 'https:';
-    const wsProto = isHttps ? 'wss:' : 'ws:';
-    const wsUrl = `${wsProto}//${window.location.host}/ws/live`;
+    const wsUrl = getWsUrl('/ws/live');
     let ws = null;
 
     try {
@@ -383,132 +507,106 @@ export default function ThreeViewport({ rigMode = 'cinematic_cache', onPrimSelec
   }, [simulating]);
 
   return (
-    <div className="relative w-full h-full min-h-[480px] bg-neutral-950 rounded-xl overflow-hidden border border-neutral-800 flex flex-col justify-between">
+    <div className="relative w-full h-full min-h-0 min-w-0 bg-neutral-950 overflow-hidden flex flex-col justify-between select-none">
       {/* 3D WebGL Canvas */}
       <div ref={containerRef} className="absolute inset-0 w-full h-full cursor-grab active:cursor-grabbing" />
 
-      {/* Viewport HUD Overlay (Top-Left) */}
-      <div className="relative top-3 left-3 flex flex-col gap-2 pointer-events-none w-fit z-10">
-        <div className="flex items-center gap-2 bg-neutral-900/85 backdrop-blur-md px-3 py-1.5 rounded-lg border border-neutral-700/60 shadow-lg pointer-events-auto">
-          <span className={`w-2 h-2 rounded-full ${wsConnected ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`}></span>
-          <span className="text-xs font-mono font-medium text-neutral-200">
-            {viewportEngine === 'usd_wasm' ? 'USD-WASM Hydra Viewer' : 'WebGL Standard Viewport'}
-          </span>
-          <span className="text-[10px] bg-neutral-800 text-neutral-400 px-1.5 py-0.5 rounded font-mono">60 FPS</span>
-          <span className={`text-[10px] px-1.5 py-0.5 rounded font-mono ${
-            wsConnected ? 'bg-emerald-950/80 border border-emerald-700 text-emerald-300' : 'bg-neutral-800 text-neutral-400'
+      {/* Top-Left Sleek Compact HUD */}
+      <div className="absolute top-2.5 left-2.5 flex flex-col gap-1.5 z-10 font-mono text-xs max-w-[calc(100%-20px)] pointer-events-auto">
+        <div className="flex items-center gap-1.5 bg-neutral-900/85 backdrop-blur-md px-2.5 py-1 rounded-lg border border-neutral-800 shadow-md">
+          <span className={`w-2 h-2 rounded-full shrink-0 ${wsConnected ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`} />
+          <button
+            onClick={() => setShowEngineDetails((v) => !v)}
+            className="flex items-center gap-1 text-neutral-200 hover:text-white font-medium cursor-pointer"
+            title="Click to toggle engine details"
+          >
+            <span className="truncate max-w-[130px] sm:max-w-none">
+              {viewportEngine === 'usd_wasm' ? 'USD Hydra WASM' : 'WebGL Standard'}
+            </span>
+            <span className="text-[10px] text-neutral-500">{showEngineDetails ? '▲' : '▼'}</span>
+          </button>
+          <span className="text-[10px] bg-neutral-800 text-neutral-400 px-1 py-0.2 rounded font-mono hidden sm:inline">60 FPS</span>
+          <span className={`text-[9px] px-1.5 py-0.2 rounded font-mono ${
+            wsConnected ? 'bg-emerald-950/80 text-emerald-300 border border-emerald-800' : 'bg-neutral-800 text-neutral-400'
           }`}>
-            {wsConnected ? '⚡ WS LIVE' : 'WS OFFLINE'}
+            {wsConnected ? 'WS LIVE' : 'WS OFF'}
           </span>
         </div>
 
-        {/* Engine Mode Selector Buttons */}
-        <div className="flex items-center gap-1 bg-neutral-900/85 backdrop-blur-md p-1 rounded-lg border border-neutral-700/60 pointer-events-auto shadow-md">
-          <button
-            onClick={() => setViewportEngine('usd_wasm')}
-            className={`flex items-center gap-1 px-2.5 py-1 rounded text-[11px] font-mono cursor-pointer transition-all ${
-              viewportEngine === 'usd_wasm'
-                ? 'bg-indigo-600 text-white font-semibold shadow-sm'
-                : 'text-neutral-400 hover:text-neutral-200'
-            }`}
-          >
-            <Cpu className="w-3.5 h-3.5" /> USD-WASM Engine
-          </button>
-          <button
-            onClick={() => setViewportEngine('standard')}
-            className={`flex items-center gap-1 px-2.5 py-1 rounded text-[11px] font-mono cursor-pointer transition-all ${
-              viewportEngine === 'standard'
-                ? 'bg-indigo-600 text-white font-semibold shadow-sm'
-                : 'text-neutral-400 hover:text-neutral-200'
-            }`}
-          >
-            <Layers className="w-3.5 h-3.5" /> WebGL Standard
-          </button>
-        </div>
-
-        <div className="bg-neutral-900/85 backdrop-blur-md px-3 py-2 rounded-lg border border-neutral-700/60 text-[11px] font-mono text-neutral-400 flex flex-col gap-1">
-          <div>Stage: <span className="text-indigo-300">openlore://stages/hero_scene.usda</span></div>
-          <div>Active Prim: <span className="text-neutral-200 font-semibold">{selectedPrim || '/World/Characters/HeroArmor'}</span></div>
-          <div>Rig Variant: <span className={rigMode === 'cinematic_cache' ? 'text-amber-400 font-bold' : 'text-emerald-400 font-bold'}>{rigMode}</span></div>
-        </div>
+        {/* Collapsible Details Drawer */}
+        {showEngineDetails && (
+          <div className="flex flex-col gap-1.5 bg-neutral-900/95 backdrop-blur-md p-2 rounded-lg border border-neutral-800 shadow-xl max-w-xs text-[11px]">
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setViewportEngine('usd_wasm')}
+                className={`flex-1 flex items-center justify-center gap-1 py-1 rounded text-[10px] cursor-pointer transition-all ${
+                  viewportEngine === 'usd_wasm' ? 'bg-indigo-600 text-white font-semibold' : 'bg-neutral-800 text-neutral-400 hover:text-neutral-200'
+                }`}
+              >
+                <Cpu className="w-3 h-3" /> USD-WASM
+              </button>
+              <button
+                onClick={() => setViewportEngine('standard')}
+                className={`flex-1 flex items-center justify-center gap-1 py-1 rounded text-[10px] cursor-pointer transition-all ${
+                  viewportEngine === 'standard' ? 'bg-indigo-600 text-white font-semibold' : 'bg-neutral-800 text-neutral-400 hover:text-neutral-200'
+                }`}
+              >
+                <Layers className="w-3 h-3" /> WebGL
+              </button>
+            </div>
+            <div className="text-[10px] text-neutral-400 flex flex-col gap-0.5 border-t border-neutral-800 pt-1">
+              <div className="truncate">Prim: <span className="text-neutral-200 font-semibold">{selectedPrim.split('/').pop()}</span></div>
+              <div>Rig: <span className={rigMode === 'cinematic_cache' ? 'text-amber-400' : 'text-emerald-400'}>{rigMode}</span></div>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Bottom HUD Telemetry Bar */}
-      <div className="relative bottom-3 mx-3 flex flex-wrap items-center justify-between gap-3 bg-neutral-900/90 backdrop-blur-md px-4 py-2.5 rounded-xl border border-neutral-700/70 shadow-2xl z-10 font-mono text-xs pointer-events-auto">
+      {/* Sleek Bottom Live Link HUD */}
+      <div className="absolute bottom-2 inset-x-2 sm:inset-x-3 flex items-center justify-between gap-2 bg-neutral-900/85 backdrop-blur-md px-3 py-1.5 rounded-lg border border-neutral-800/80 shadow-xl z-10 font-mono text-[11px] pointer-events-auto">
         {/* Left: Stream Protocol & Subject */}
-        <div className="flex items-center gap-2.5">
-          <div className="flex items-center gap-2">
-            <span className={`w-2.5 h-2.5 rounded-full ${telemetry.active || simulating ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`} />
-            <span className="font-bold text-neutral-200">LIVE LINK HUD</span>
-          </div>
-          <span className="text-[10px] bg-neutral-800 text-indigo-300 px-2 py-0.5 rounded border border-neutral-700 font-mono">
+        <div className="flex items-center gap-2 min-w-0">
+          <span className={`w-2 h-2 rounded-full shrink-0 ${telemetry.active || simulating ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`} />
+          <span className="font-bold text-neutral-200 hidden sm:inline">LIVE LINK</span>
+          <span className="text-[9px] bg-neutral-800 text-indigo-300 px-1.5 py-0.2 rounded border border-neutral-700 font-mono hidden md:inline">
             UDP:11111
           </span>
-          <span className="text-[11px] text-neutral-300">
-            Subject: <strong className="text-white">{telemetry.subject}</strong>
+          <span className="text-neutral-300 truncate max-w-[120px] sm:max-w-[180px]">
+            <strong className="text-white font-medium">{telemetry.subject}</strong>
           </span>
-          <span className="text-[10px] bg-emerald-950/80 border border-emerald-700 text-emerald-400 px-1.5 py-0.5 rounded font-semibold">
+          <span className="text-[9px] bg-emerald-950/80 border border-emerald-700 text-emerald-400 px-1 py-0.2 rounded font-semibold hidden sm:inline">
             {telemetry.fps} FPS
           </span>
         </div>
 
-        {/* Center: Real-Time Transform Coordinates & Camera Optics */}
-        <div className="flex items-center gap-3 text-[11px]">
-          <div className="flex items-center gap-1.5">
-            <span className="text-neutral-500 font-semibold">POS</span>
-            <span className="text-neutral-300">
-              X:<span className="text-emerald-400 font-semibold">{telemetry.pos.x.toFixed(1)}</span>
-            </span>
-            <span className="text-neutral-300">
-              Y:<span className="text-emerald-400 font-semibold">{telemetry.pos.y.toFixed(1)}</span>
-            </span>
-            <span className="text-neutral-300">
-              Z:<span className="text-emerald-400 font-semibold">{telemetry.pos.z.toFixed(1)}</span>
-            </span>
-          </div>
-
-          <div className="h-3.5 w-px bg-neutral-700 hidden sm:block" />
-
-          <div className="flex items-center gap-1.5">
-            <span className="text-neutral-500 font-semibold">ROT</span>
-            <span className="text-neutral-300">
-              P:<span className="text-indigo-400 font-semibold">{telemetry.rot.pitch.toFixed(1)}°</span>
-            </span>
-            <span className="text-neutral-300">
-              Y:<span className="text-indigo-400 font-semibold">{telemetry.rot.yaw.toFixed(1)}°</span>
-            </span>
-            <span className="text-neutral-300">
-              R:<span className="text-indigo-400 font-semibold">{telemetry.rot.roll.toFixed(1)}°</span>
-            </span>
-          </div>
-
-          <div className="h-3.5 w-px bg-neutral-700 hidden md:block" />
-
-          <div className="hidden md:flex items-center gap-1.5">
-            <span className="text-neutral-500 font-semibold">OPTICS</span>
-            <span className="text-neutral-300">
-              FOV:<span className="text-amber-400 font-semibold">{telemetry.fov.toFixed(1)}°</span>
-            </span>
-            <span className="text-neutral-400">{telemetry.focalLength}mm</span>
-            <span className="text-neutral-400">f/{telemetry.aperture}</span>
-          </div>
+        {/* Center: Coordinates */}
+        <div className="hidden lg:flex items-center gap-2 text-[10px]">
+          <span className="text-neutral-500">POS</span>
+          <span className="text-neutral-300">
+            X:<span className="text-emerald-400 font-semibold">{telemetry.pos.x.toFixed(1)}</span>{' '}
+            Y:<span className="text-emerald-400 font-semibold">{telemetry.pos.y.toFixed(1)}</span>{' '}
+            Z:<span className="text-emerald-400 font-semibold">{telemetry.pos.z.toFixed(1)}</span>
+          </span>
+          <span className="text-neutral-700">&bull;</span>
+          <span className="text-neutral-500">ROT</span>
+          <span className="text-neutral-300">
+            P:<span className="text-indigo-400 font-semibold">{telemetry.rot.pitch.toFixed(1)}°</span>{' '}
+            Y:<span className="text-indigo-400 font-semibold">{telemetry.rot.yaw.toFixed(1)}°</span>
+          </span>
         </div>
 
-        {/* Right: Stream Toggle & Packet Stats */}
-        <div className="flex items-center gap-3">
-          <span className="text-[10px] text-neutral-400">
-            Pkts: <span className="text-neutral-200 font-semibold">{telemetry.packets.toLocaleString()}</span>
-          </span>
+        {/* Right: Simulation Toggle */}
+        <div className="flex items-center gap-2 shrink-0">
           <button
             onClick={() => setSimulating((prev) => !prev)}
-            className={`px-2.5 py-1 rounded text-[11px] font-semibold transition-all cursor-pointer border ${
+            className={`px-2 py-0.5 rounded text-[10px] font-semibold transition-all cursor-pointer border ${
               simulating
                 ? 'bg-amber-500/20 text-amber-300 border-amber-500/50'
                 : 'bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-300 border-indigo-500/40'
             }`}
             title="Simulate incoming 60 FPS Live Link stream"
           >
-            {simulating ? 'Stop Simulator' : 'Test Sine Stream'}
+            {simulating ? 'Stop Stream' : 'Test Sine'}
           </button>
         </div>
       </div>

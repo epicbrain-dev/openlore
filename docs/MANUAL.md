@@ -31,14 +31,19 @@ _Target Audience: Pipeline TDs, Lead 3D Artists, Narrative Directors, Game Devel
    - [3.11 openlore auth](#311-openlore-auth)
    - [3.12 openlore dcc](#312-openlore-dcc)
    - [3.13 openlore doctor](#313-openlore-doctor)
-4. [Web Studio Cockpit Operator Guide](#4-web-studio-cockpit-operator-guide)
-   - [4.1 Starting the Cockpit](#41-starting-the-cockpit)
-   - [4.2 Tab 1: Stage Viewport & Real-Time Telemetry](#42-tab-1-stage-viewport--real-time-telemetry)
-   - [4.3 Tab 2: Stage & Collaborative CRDT Synchronization](#43-tab-2-stage--collaborative-crdt-synchronization)
-   - [4.4 Tab 3: Narrative Lore Graph & SPARQL Canon Auditing](#44-tab-3-narrative-lore-graph--sparql-canon-auditing)
-   - [4.5 Tab 4: Partner Enclave Isolation & Sanitization](#45-tab-4-partner-enclave-isolation--sanitization)
-   - [4.6 Tab 5: Provenance Ledger & OPA Smart Contract Accounting](#46-tab-5-provenance-ledger--opa-smart-contract-accounting)
-   - [4.7 Tab 6: Temporal Compilation Grid & Multi-Target Packaging](#47-tab-6-temporal-compilation-grid--multi-target-packaging)
+4. [OpenLore Studio Desktop & Web Operator Guide](#4-openlore-studio-desktop--web-operator-guide)
+   - [4.1 Launching the Desktop & Web Cockpit](#41-launching-the-desktop--web-cockpit)
+   - [4.2 Workspace 1: 3D Layout & Staging (USD 24.11)](#42-workspace-1-3d-layout--staging-usd-2411)
+   - [4.3 Workspace 2: Animation & Scenegraph (24 FPS)](#43-workspace-2-animation--scenegraph-24-fps)
+   - [4.4 Workspace 3: Shot Review & Production Tracking (ShotGrid)](#44-workspace-3-shot-review--production-tracking-shotgrid)
+   - [4.5 Workspace 4: Lookdev & Shading Studio (MaterialX)](#45-workspace-4-lookdev--shading-studio-materialx)
+   - [4.6 Workspace 5: Multi-Studio Collaborative Sync (CRDT)](#46-workspace-5-multi-studio-collaborative-sync-crdt)
+   - [4.7 Workspace 6: Render Farm & Comp Grid (Deadline)](#47-workspace-6-render-farm--comp-grid-deadline)
+   - [4.8 Workspace 7: Narrative Multiverse & Lore Graph (SHACL)](#48-workspace-7-narrative-multiverse--lore-graph-shacl)
+   - [4.9 Workspace 8: Provenance Ledger & OPA Royalties (BLAKE3)](#49-workspace-8-provenance-ledger--opa-royalties-blake3)
+   - [4.10 Workspace 9: Partner Enclave Cleanroom (Quarantine & Sanitization)](#410-workspace-9-partner-enclave-cleanroom-quarantine--sanitization)
+   - [4.11 Hollywood Animation Transport Timeline & Playback](#411-hollywood-animation-transport-timeline--playback)
+   - [4.12 Accessible Workspace Navigation & Keyboard Hotkeys](#412-accessible-workspace-navigation--keyboard-hotkeys)
 5. [3D DCC & Game Engine Integration Manual](#5-3d-dcc--game-engine-integration-manual)
    - [5.1 Blender 4.x Integration Guide](#51-blender-4x-integration-guide)
    - [5.2 Autodesk Maya Integration Guide](#52-autodesk-maya-integration-guide)
@@ -384,55 +389,153 @@ openlore doctor --json
 
 ---
 
-# 4. Web Studio Cockpit Operator Guide
+# 4. OpenLore Studio Desktop & Web Operator Guide
 
-The Web Studio Cockpit provides a unified single-page interface for interacting with all facets of the OpenLore platform.
+OpenLore Studio is a unified cross-platform desktop application powered by **Electron 44**, **React 19**, and **Three.js**, alongside the embedded browser cockpit. Designed specifically for **visual effects producers, technical directors, and 3D animators**, it mirrors the visual conventions, muscle memory, and dark neutral graphite aesthetic of Maya, Houdini Solaris, Unreal Engine 5, and ShotGrid.
 
-## 4.1 Starting the Cockpit
+---
 
-Launch the server from your terminal:
+## 4.1 Launching the Desktop & Web Cockpit
+
+### Option A: Standalone Desktop Application (Recommended)
+OpenLore Studio runs as a native cross-platform application on macOS, Windows, and Linux.
+
+```bash
+# Development Mode (Hot Reloading + Live Electron Runner)
+cd web
+npm run electron:dev
+
+# Build Standalone Desktop Binary Bundle
+npm run electron:pack
+# Produces: web/dist-electron/mac-arm64/OpenLore Studio.app
+```
+
+**Key Native Desktop Capabilities**:
+* **Native OS File Pickers**: Integrated with macOS Finder, Windows Explorer, and Linux GTK dialogs for opening OpenUSD stages (`.usda`, `.usdc`, `.usd`) via `Cmd+O` / `Ctrl+O`.
+* **Integrated Backend Supervisor**: The Electron runtime transparently checks and connects to the local Python REST daemon (`http://127.0.0.1:8000`), routing `file:///api/*` requests automatically.
+* **Window Drag Isolation**: OS titlebar drag regions are strictly confined to non-interactive header background spaces (`-webkit-app-region: drag`), while all buttons, navigation tabs, dropdowns, and form inputs enforce `-webkit-app-region: no-drag !important` and `pointer-events: auto !important`.
+
+### Option B: Embedded Web Server (Browser Cockpit)
 ```bash
 openlore web --port 8000
 ```
 Open your browser and navigate to: **`http://localhost:8000`**
 
-The cockpit consists of a top navigation bar showing system online status, cluster environment, and 6 specialized workflow tabs.
-
 ---
 
-## 4.2 Tab 1: Stage Viewport & Real-Time Telemetry
+## 4.2 Workspace 1: 3D Layout & Staging (USD 24.11)
 
-The Viewport tab provides real-time 3D scene preview and Live Link streaming telemetry.
+The **3D Layout & Staging** workspace is the master assembly environment for OpenUSD stage composition.
 
 ```text
 ┌───────────────────────────────────────────────────────────────────────────┬────────────────────────────────┐
-│  Three.js Viewport (Wasm USD Hydra / WebGL Preview)                      │ USD Prim Hierarchy Inspector   │
-│                                                                           ├────────────────────────────────┤
-│  [Grid Floor]               [Hero Character Mesh]                         │ ▾ /World                       │
-│                                                                           │   ▸ /Environment               │
-│                                [Virtual Camera]                           │   ▾ /Characters                │
-│                                                                           │     • /HeroArmor [Mesh]        │
-│  HUD: Live Link UDP (60 FPS) | X: 120.4 Y: -32.1 Z: 45.0                  │     • /Pauldrons [Mesh]        │
-│  Shading: PBR Realistic     | Camera: CineCameraActor                     │   • /CineCamera [Camera]       │
+│  Three.js USD Viewport (Hydra WASM / WebGL PBR)                          │ USD Outliner Hierarchy Tree    │
+│  [Shading: USD Shaded | Wireframe | Lookdev Clay]   [Hydra WASM: 60 FPS]  ├────────────────────────────────┤
+│                                                                           │ ▾ /World                       │
+│      ┌───────────────┐                  ┌───────────────┐                 │   ▸ /Environment               │
+│      │  Hero Armor   │                  │ Ground Stage  │                 │   ▾ /Characters                │
+│      │  [BoxHelper]  │                  │               │                 │     • /HeroArmor [Mesh] 👁 🔒  │
+│      └───────────────┘                  └───────────────┘                 │     • /Pauldrons [Mesh] 👁     │
+│                                                                           │   • /CineCamera [Camera]       │
+│  HUD: Live Link UDP (60 FPS) | X: 120.4 Y: -32.1 Z: 45.0                  ├────────────────────────────────┤
+│  Stage: openlore://stages/sq042_sh0020_hero.usda                          │ Channel Box: Transform Matrix  │
+│                                                                           │ Trans X: 0.00  Y: 1.25  Z:-3.40│
+│                                                                           │ Rot   X: 0.0°  Y: 24.5° Z: 0.0°│
+│                                                                           │ Scale X: 1.00  Y: 1.00  Z: 1.00│
 └───────────────────────────────────────────────────────────────────────────┴────────────────────────────────┘
 ```
 
 ### Key Controls & Capabilities:
-1. **Engine Toggle**:
-   - **`USD-WASM Hydra Viewer`**: Client-side lexer parses raw `.usda` stage definitions, reconstructing `point3f[]` vertex buffers and PBR materials directly in WebAssembly.
-   - **`WebGL Standard Viewport`**: High-frame-rate procedural preview.
-2. **Camera Controls**:
-   - **Orbit**: Left Click + Drag.
-   - **Pan**: Right Click + Drag (or Shift + Left Click).
-   - **Zoom**: Mouse Scroll Wheel.
-3. **Scenegraph Inspector (Right Panel)**:
-   - Click any prim (e.g. `/World/Characters/HeroArmor`) to inspect vertex count, face index offsets, display colors, and CAS content hash.
-4. **Live Link Telemetry HUD (Bottom Bar)**:
-   - Displays incoming UDP frame rates, Euler rotation (`pitch`, `yaw`, `roll`), and camera field of view.
+1. **USD Outliner Scenegraph**:
+   - Displays real-time hierarchical tree (`/World`, `/Characters`, `/Environment`, `/Cameras`).
+   - Eye visibility toggles (`👁`) and lock icons for individual prims.
+   - Filter search input for instantaneous prim locating across complex stage hierarchies.
+2. **Raycast Mesh Selection & Visual Bounding**:
+   - Direct viewport raycasting: clicking on any 3D geometry in the scene selects the corresponding prim in the Outliner and Attribute Inspector.
+   - Active prim is highlighted with a gold wireframe selection bounding box (`THREE.BoxHelper`).
+3. **Live Shading Modes**:
+   - **USD Shaded**: Full PBR metallic/roughness material rendering.
+   - **Wireframe**: Topology wireframe overlay for polygon inspection.
+   - **Lookdev Clay**: Neutral 18% gray lambertian shader for lighting balance.
+4. **Maya/Houdini Channel Box (Transform Matrix)**:
+   - Real-time numeric `<input>` fields for `Translate X/Y/Z`, `Rotate X/Y/Z`, and `Scale X/Y/Z`.
+   - Modifying Channel Box coordinates updates the Three.js mesh matrix and dispatches stage delta callbacks.
+5. **USD Variant Sets & MaterialX Bindings**:
+   - 1-click toggling of rig variants (`cinematic_cache` vs `collision_prims`) and Level of Detail (`LOD0` vs `LOD1`).
+   - MaterialX binding inspection (`ND_openlore_pbr`, base color `#b8860b`, metallic `0.85`, roughness `0.22`).
 
 ---
 
-## 4.3 Tab 2: Stage & Collaborative CRDT Synchronization
+## 4.3 Workspace 2: Animation & Scenegraph (24 FPS)
+
+A dedicated, specialized workspace built for character animators and rigging technical directors.
+
+### Key Capabilities:
+1. **3D Character Skeleton & Rig Viewport**:
+   - Real-time 3D character rig visualization with interactive joint spheres (`Root_Hips`, `Spine_01`, `Chest_Torso`, `Head_Neck`, `Arm_IK_Left`, `Leg_IK_Left`) and connecting bone chain lines.
+   - Procedural pose deformation driven by timeline frame scrubbing.
+2. **Interactive Graph Editor (Bézier Curves)**:
+   - Real-time SVG cubic Bézier spline interpolation through keyframe knots with tangent handles.
+   - Color-coded channel tracks:
+     - `Translate X` (Rose `#f43f5e`)
+     - `Translate Y` (Emerald `#10b981`)
+     - `Translate Z` (Sky `#0ea5e9`)
+     - `Rotate Y` (Amber `#f59e0b`)
+     - `Spine Bend` (Purple `#8b5cf6`)
+   - Tangent interpolation mode toggles:
+     - **Bézier (Smooth)**: Spline curve with cubic tangent weighting.
+     - **Linear**: Direct point-to-point interpolation.
+     - **Step (Hold)**: Constant hold until the next keyframe.
+   - Click-to-seek time playhead synchronized with the master transport.
+3. **Dope Sheet Mode**:
+   - Block timeline view displaying keyframe diamonds across all active transform channels for rapid multi-track retiming.
+4. **Performance Takes & Pose Library**:
+   - Take selector: `Take 01: Hero Infiltration`, `Take 02: Combat Stance`, `Take 03: Evasive Roll`.
+   - Visual Pose Library cards:
+     - **Combat Idle** (Weight centered, blade low)
+     - **Sandworm Dodge** (Kinetic pivot, low crouch)
+     - **Crysknife Strike** (High-angle lunge, extended lead)
+     - **Tactical Landing** (Shock absorption, grounded fist)
+   - **1-Click "Apply Pose to Rig"**: Interpolates the 3D character mesh and jumps the playhead directly to the pose keyframe.
+5. **Rig & Animation Controls**:
+   - **FK / IK Blending**: Sliders for Arm Limbs (`FK ◄───► IK`) and Leg Limbs.
+   - **Squash & Stretch Factor**: Real-time geometric scale deformation slider (`0.70x` to `1.30x`).
+   - **Onion Skinning (Ghosting)**: Renders translucent ghost character poses in cyan (past frame) and magenta (future frame).
+   - **Motion Arc Trails**: Visualizes limb trajectory curves through 3D space.
+
+---
+
+## 4.4 Workspace 3: Shot Review & Production Tracking (ShotGrid)
+
+Production tracking and sequence management integrated into the creative viewport.
+
+### Workflow:
+1. **Sequence Breakdown (`SQ042 - Arrakis Basin Infiltration`)**:
+   - Shot status badges: `In Progress`, `In Review`, `Approved`, `Blocked`.
+   - Shot thumbnails, frame ranges (e.g. `1001 - 1084`), duration counts (`84f`), and assigned lead artists.
+2. **1-Click Stage Loading**:
+   - Clicking **`Load Stage`** on any shot (such as `SQ042_SH0020` or `SQ042_SH0040`) updates the global VFX pipeline breadcrumb, mounts the corresponding OpenUSD stage file (`openlore://stages/sq042_sh0020_hero.usda`), and switches directly to the 3D Layout workspace.
+
+---
+
+## 4.5 Workspace 4: Lookdev & Shading Studio (MaterialX)
+
+Turntable studio workspace for lighting, look development, and MaterialX shader authoring.
+
+### Capabilities:
+1. **Interactive 360° Turntable**:
+   - Automated continuous spin toggle with variable rotation speeds.
+2. **ACEScg Lighting Environments**:
+   - **Studio Neutral 5600K**: Balanced neutral daylight studio with key, fill, and rim lights.
+   - **Golden Sunset 3200K**: Warm tungsten directional key light mimicking sunset conditions.
+   - **Cyberpunk LED Volume**: High-contrast cyan and magenta rim lights simulating a virtual production LED stage.
+   - **High-Key Rim Light**: Crisp silhouette rim lighting for form and silhouette evaluation.
+3. **Real-time MaterialX/PBR Parameters**:
+   - Base Color picker, Metallic (`0.00 - 1.00`), Roughness (`0.00 - 1.00`), Normal Map Strength, and Index of Refraction (`IOR`).
+
+---
+
+## 4.6 Workspace 5: Multi-Studio Collaborative Sync (CRDT)
 
 Manages real-time multi-studio concurrent authoring across distributed geographic sites without locking conflicts.
 
@@ -442,84 +545,104 @@ Manages real-time multi-studio concurrent authoring across distributed geographi
 2. **Recording a Collaborative Edit**:
    - Select the active studio from the dropdown.
    - Modify the transform coordinates (Translation X/Y/Z, Rotation).
-   - Click **`Record Collaborative Edit`**.
-   - An event is immediately dispatched across the CRDT vector clock log.
+   - Click **`Record Collaborative Edit`**. An event is immediately dispatched across the CRDT vector clock log.
 3. **Conflict Resolution**:
-   - Observe how conflicting simultaneous transformations are deterministically ordered using Last-Write-Wins (LWW) and Observed-Removed Sets (OR-Set) without user-visible lock delays.
+   - Conflicting simultaneous transformations are deterministically ordered using Last-Write-Wins (LWW) and Observed-Removed Sets (OR-Set) without user-visible lock delays.
 
 ---
 
-## 4.4 Tab 3: Narrative Lore Graph & SPARQL Canon Auditing
+## 4.7 Workspace 6: Render Farm & Comp Grid (Deadline)
+
+Orchestrates distributed worker pools compiling raw OpenUSD stages into runtime game packages and cinematic caches.
+
+### Operational Steps:
+1. **Select Target Formats**:
+   - **Unreal Engine 5.4 Package** (`.pak` with Nanite & PCD3D_SM6 shaders).
+   - **Unity 6000.0 Package** (`.unitypackage` with URP/HDRP prefabs).
+   - **Offline Shot Point Cache** (24 FPS time-sampled `.usdc`).
+2. **Dispatch Distributed Pipeline**:
+   - Click **`Dispatch Compilation Pipeline (Temporal / Argo)`**.
+   - Watch the activity stepper transition through:
+     `validate_stage` -> `compile_unreal_package` -> `compile_unity_package` -> `bake_shot_point_cache` -> `register_production_catalog`.
+3. **Download Manifests**:
+   - Click **`Download Manifest`** to obtain engine-specific manifests or export the entire central production catalog JSON.
+
+---
+
+## 4.8 Workspace 7: Narrative Multiverse & Lore Graph (SHACL)
 
 Houses the semantic multiverse triplestore, enforcing narrative continuity and powering the dynamic GraphRAG assistant.
 
 ### Features:
 1. **Named Graph Reality Switcher**:
-   - Switch between **Prime Canon** (`openlore:canon:prime`) and branched alternate realities (e.g. **Quantum Spin-Off Reality**).
+   - Switch between **Prime Canon** (`openlore:canon:prime`) and branched alternate realities (`openlore:branch:dark_timeline`).
 2. **GraphRAG Narrative Assistant**:
-   - Click one of the quick prompt chips or type a question:
-     - *"Audit timeline for paradoxes"*
-     - *"Show all events attended by Elara Vance"*
-     - *"Trace branching divergence of Quantum Spin-Off"*
-   - Click **`Ask GraphRAG Copilot`**.
-   - The engine dynamically synthesizes a SPARQL query, queries the W3C RDF triplestore, evaluates character lifecycle intervals, and outputs the verified answer accompanied by explicit RDF triple citations.
+   - Ask natural language continuity queries (*"Audit timeline for paradoxes"*, *"Show all events attended by Paul Atreides"*).
+   - The engine synthesizes SPARQL queries against W3C RDF 1.1 triplestores and returns answers with explicit RDF triple citations.
 3. **Contradiction Detection**:
-   - If a scriptwriter attempts to place a character into a battle taking place after their canonical death, the assistant displays a red **`CONTRADICTION DETECTED`** banner citing the exact violating triples.
+   - Real-time alerts when a character is assigned to an event outside their canonical lifespan.
 
 ---
 
-## 4.5 Tab 4: Partner Enclave Isolation & Sanitization
-
-The vendor sandbox prevents intellectual property leaks when sharing 3D stages with third-party outsourcing vendors.
-
-### Operational Steps:
-1. **Outbound IP Decimation**:
-   - Adjust the **Decimation Ratio** slider from **1%** (ultra-low proxy) up to **100%** (full master resolution).
-2. **Clay Proxy Mode**:
-   - Toggle **`Apply Neutral Clay Proxy Material`** to strip proprietary lookdev textures and MaterialX node graphs, replacing them with a uniform neutral albedo shader.
-3. **Pre-Flight Linter & Quarantine Sandbox**:
-   - When a partner uploads a scene delivery, the pre-flight linter scans for non-manifold edges, inverted normals, unlinked sublayers, and malicious embedded scripts.
-   - Any failing mesh is automatically diverted to the `/data/quarantine` sandbox.
-4. **TD 1-Click Promotion Gate**:
-   - Pipeline TDs review the linter clean report and click **`Promote to Master Assembly`** to merge partner geometry into the prime OpenUSD stage.
-
----
-
-## 4.6 Tab 5: Provenance Ledger & OPA Smart Contract Accounting
+## 4.9 Workspace 8: Provenance Ledger & OPA Royalties (BLAKE3)
 
 Automates royalty distribution and licensing compliance using Open Policy Agent (OPA) Rego rules.
 
 ### Capabilities:
 1. **HMAC-SHA256 DAG Verification**:
-   - Top banner displays the cryptographic manifest signature verifying that all scene prims originate from authorized content-addressed hashes.
+   - Verifies that all scene prims originate from authorized content-addressed hashes.
 2. **Automated Royalty Splits**:
-   - Visual progress bars illustrate percentage allocations across contributing studios (e.g., London 18.5%, LA 12.0%, Tokyo 9.5%, Montreal Rigging 5.0%).
+   - Visual percentage allocations across contributing studios (e.g. London 18.5%, LA 12.0%, Tokyo 9.5%, Montreal Rigging 5.0%).
 3. **OPA Rego Policy Compliance**:
-   - Audits the scene against `schemas/opa/royalties.rego`. If any prim references an unlicensed asset, export allowance is automatically revoked.
+   - Audits the scene against `schemas/opa/royalties.rego`.
 4. **Download Provenance Manifest**:
-   - Click **`Download Manifest`** in the top banner to export `hero_scene_provenance_manifest.json` containing the complete cryptographically signed prim tree.
+   - Click **`Download Manifest`** to export signed JSON provenance trees.
 
 ---
 
-## 4.7 Tab 6: Temporal Compilation Grid & Multi-Target Packaging
+## 4.10 Workspace 9: Partner Enclave Cleanroom (Quarantine & Sanitization)
 
-Orchestrates distributed container worker pools compiling raw OpenUSD stages into runtime game packages and cinematic caches.
+Vendor sandbox preventing intellectual property leaks when sharing 3D stages with external partners.
 
 ### Operational Steps:
-1. **Select Target Formats**:
-   - Check the desired target formats:
-     - **Unreal Engine 5.4 Package** (`.pak` with Nanite & PCD3D_SM6 shaders).
-     - **Unity 6000.0 Package** (`.unitypackage` with URP/HDRP prefabs).
-     - **Offline Shot Point Cache** (24 FPS time-sampled `.usdc`).
-2. **Dispatch Distributed Pipeline**:
-   - Click **`Dispatch Compilation Pipeline (Temporal / Argo)`**.
-   - Watch the activity stepper transition through:
-     `validate_stage` -> `compile_unreal_package` -> `compile_unity_package` -> `bake_shot_point_cache` -> `register_production_catalog`.
-3. **Central Production Catalog Ledger**:
-   - Upon completion, a new catalog entry is registered with an immutable BLAKE3 hash and unique catalog ID (e.g. `cat-XXXXXXXX`).
-4. **Download Manifests**:
-   - **Per-Row**: Click **`Download Manifest`** next to any build to download its engine-specific manifest (e.g. `HeroAsset_unreal.pak.manifest.json`).
-   - **Full Catalog**: Click **`Download Full Catalog Manifest`** at the top right of the table to download `openlore_production_catalog.json` containing the entire catalog state.
+1. **Outbound IP Decimation**:
+   - Slider from **1%** to **100%** with quick presets (`10%`, `25%`, `50%`, `75%`, `100%`).
+2. **Clay Proxy Mode**:
+   - Strips proprietary shaders and replaces them with a uniform neutral clay material.
+3. **Pre-Flight Linter & Quarantine Sandbox**:
+   - Audits deliverables for polycount ceilings, naming rules, and scene hierarchy. Diverts failing meshes to `/data/quarantine`.
+4. **TD 1-Click Promotion Gate**:
+   - Technical Directors acquire an optimistic concurrency lock token and promote approved vendor geometry directly into the master OpenUSD assembly stage.
+
+---
+
+## 4.11 Hollywood Animation Transport Timeline & Playback
+
+The studio timeline at the bottom of the window provides Hollywood-standard playback controls:
+
+* **Standard VFX Frame Range**: Frame `1001` through `1150` running at **24.00 FPS**.
+* **SMPTE Timecode Readout**: Live conversion of current frame to standard SMPTE timecode (e.g. `00:00:43:10`).
+* **Diamond Keyframe Markers (`◆`)**: Displays keyframe knot locations across the active sequence.
+* **Playback Controls**:
+  - **Play / Pause**: Click the **`PLAY`** button or press **`Spacebar`**.
+  - **Step Forward / Backward**: Arrow buttons or **`Left` / `Right` Arrow Keys** step by 1 frame.
+  - **First / Last Frame**: Jump directly to `1001` or `1150`.
+  - **Scrubbing**: Click and drag anywhere across the timeline track to scrub frames in real time.
+
+---
+
+## 4.12 Accessible Workspace Navigation & Keyboard Hotkeys
+
+To guarantee that all 9 workspaces remain 100% accessible on any screen width or aspect ratio:
+
+* **Horizontal Scroll Chevrons**:
+  - Click `<ChevronLeft />` or `<ChevronRight />` to smoothly scroll the workspace tab strip horizontally.
+* **Auto-Centering Tab Selection**:
+  - Selecting any workspace automatically centers its tab within the navigation strip via smooth scrolling.
+* **Persistent "Workspaces (9) ▾" Dropdown**:
+  - Located on the right edge of the navigation bar, this dropdown lists all 9 workspaces with their DCC icons, badges (`USD 24.11`, `24 FPS`, `ShotGrid`, etc.), and hotkeys. Provides immediate 1-click access even on compact laptops or split screens.
+* **DCC Keyboard Hotkeys**:
+  - Press `⌥1` through `⌥9` (macOS) or `Alt+1` through `Alt+9` (Windows/Linux) to instantly switch between workspaces.
 
 ---
 

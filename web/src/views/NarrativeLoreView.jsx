@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { apiUrl } from '../utils/api';
 import { GitBranch, ShieldCheck, User, Calendar, Plus, Sparkles, CheckCircle2, Bot, Send, Terminal, AlertCircle } from 'lucide-react';
 
 export default function NarrativeLoreView() {
@@ -106,7 +107,7 @@ export default function NarrativeLoreView() {
     setRagLoading(true);
 
     try {
-      const res = await fetch('/api/narrative/assistant', {
+      const res = await fetch(apiUrl('/api/narrative/assistant'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ query: q }),

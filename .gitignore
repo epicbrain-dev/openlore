@@ -12,6 +12,8 @@ build/
 develop-eggs/
 /dist/
 !web/dist/
+dist-electron/
+web/dist-electron/
 downloads/
 eggs/
 .eggs/

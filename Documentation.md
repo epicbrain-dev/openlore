@@ -45,6 +45,26 @@ External partner studios and contractors operate within isolated, air-gapped clo
 
 Once an asset receives technical and narrative approval, downstream compilation executes through an event-driven worker grid orchestrated by [Temporal](https://temporal.io/) and [Argo Workflows](https://argoproj.github.io/workflows/). Containerized worker pools automatically compile real-time engine packages, bake offline shot point caches, and register completed builds into the central production catalog.
 
+### OpenLore Studio Desktop & VFX Pipeline Cockpit
+
+OpenLore Studio is packaged as a standalone cross-platform desktop application powered by [Electron](https://www.electronjs.org/), [React 19](https://react.dev/), and [Three.js](https://threejs.org/). Engineered specifically to align with the visual workflow, ergonomic conventions, and muscle memory of visual effects producers and 3D animators (mirroring Autodesk Maya, SideFX Houdini Solaris, Unreal Engine 5, and Autodesk ShotGrid), the cockpit provides 9 dedicated production workspaces:
+
+1. **3D Layout & Staging (`USD 24.11`)**: Direct OpenUSD scenegraph hierarchy browsing via the USD Outliner, 3D viewport raycast selection with gold bounding box highlights (`THREE.BoxHelper`), live shading switches (**USD Shaded**, **Wireframe**, **Lookdev Clay**), and Maya/Houdini-style Channel Box numeric matrix transforms (`Translate`, `Rotate`, `Scale`).
+2. **Animation & Scenegraph (`24 FPS`)**: 3D character skeleton and joint hierarchy visualization, interactive Graph Editor with cubic Bézier curves and tangent interpolation handles (**Smooth**, **Linear**, **Step**), Dope Sheet mode, Pose Library with 1-click rig application (`Combat Idle`, `Sandworm Dodge`, `Crysknife Strike`, `Tactical Landing`), FK/IK blending, dynamic Squash & Stretch scaling, and multi-frame Onion Skinning (cyan/magenta ghosting).
+3. **Shot Review & Production Tracking (`ShotGrid`)**: Sequence `SQ042` shot management with live status tracking (`In Progress`, `In Review`, `Approved`, `Blocked`), thumbnail previews, frame count ranges, lead artist assignments, and 1-click stage loading into the 3D viewport.
+4. **Lookdev & Shading Studio (`MaterialX`)**: 360° turntable stage with ACEScg lighting presets (**Studio Neutral 5600K**, **Golden Sunset 3200K**, **Cyberpunk LED Volume**, **High-Key Rim**) and real-time MaterialX/PBR parameter tuning (Base Color, Metallic, Roughness, Normal, IOR).
+5. **Multi-Studio Collaborative Sync (`CRDT`)**: Real-time CRDT vector clock topology, live mutation broadcast, network severance simulator, and UE5 Live Link status.
+6. **Render Farm & Comp Grid (`Deadline`)**: GPU farm dispatch for AWS Deadline 10 and ASWF OpenCue, multi-target engine compilers (.pak, .unitypackage, .usdc), and central production catalog ledger.
+7. **Narrative Multiverse (`SHACL`)**: W3C RDF 1.1 temporal lore graph, SHACL continuity validation, and interactive SPARQL Graph RAG narrative assistant.
+8. **Provenance Ledger (`BLAKE3`)**: Cryptographic BLAKE3 CAS hashes, HMAC-SHA256 signatures, harvested USD DAG trees, and OPA Rego automated royalty splits.
+9. **Partner Enclave (`Cleanroom`)**: Outbound 1%–100% IP decimation controls, quarantine pre-flight linter, TD 1-click promotion gate, and eBPF zero-egress kernel security.
+
+### Hollywood Standard Transport Timeline & Navigation
+
+The studio interface integrates a standardized Hollywood animation transport timeline initialized to industry standard frame `1001` through `1150` at **24.00 FPS**, complete with SMPTE timecode readout (`00:00:43:10`), diamond keyframe indicators (`◆`), spacebar play/pause, and real-time frame scrubbing.
+
+Workspace access is guaranteed at all display resolutions through an accessible navigation bar featuring horizontal scroll chevrons (`<ChevronLeft />`, `<ChevronRight />`), automatic centering of the active tab, a persistent **"Workspaces (9) ▾"** quick dropdown menu, standard DCC keyboard shortcuts (`⌥1`–`⌥9` / `Alt+1`–`Alt+9`), and strict macOS window-drag isolation (`-webkit-app-region: no-drag !important`).
+
 ### System Resilience & Recovery Protocols
 
 System resilience and error recovery depend on several distinct operational protocols:

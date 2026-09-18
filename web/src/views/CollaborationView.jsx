@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { apiUrl } from '../utils/api';
 import { Wifi, WifiOff, RefreshCw, Cpu, Activity, Send, CheckCircle2, Clock } from 'lucide-react';
 
 export default function CollaborationView() {
@@ -24,7 +25,7 @@ export default function CollaborationView() {
     const nextOnline = !isOnline;
     setIsOnline(nextOnline);
     try {
-      await fetch('/api/daemon/sever', {
+      await fetch(apiUrl('/api/daemon/sever'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ sever: !nextOnline }),
@@ -43,7 +44,7 @@ export default function CollaborationView() {
 
   const handleBroadcastEdit = async () => {
     try {
-      await fetch('/api/daemon/edit', {
+      await fetch(apiUrl('/api/daemon/edit'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

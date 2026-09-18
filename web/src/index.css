@@ -24,3 +24,31 @@
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(90, 90, 90, 1);
 }
+
+/* Hide scrollbars utility */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Electron macOS window drag & clickability fixes */
+.app-drag {
+  -webkit-app-region: drag;
+}
+
+.app-no-drag,
+button,
+select,
+input,
+textarea,
+a,
+nav,
+[role="button"],
+[role="tab"],
+.cursor-pointer {
+  -webkit-app-region: no-drag !important;
+  pointer-events: auto !important;
+}

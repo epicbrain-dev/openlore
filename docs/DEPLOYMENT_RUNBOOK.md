@@ -195,14 +195,49 @@ openlore daemon start --studio-id studio_london --stage-uri openlore://stages/ro
 
 ## 8. Verification & Acceptance Testing
 
-Before certifying a new deployment or environment, execute the end-to-end integration test suite:
+Before certifying a new deployment or environment, execute the end-to-end test suite:
 
 ```bash
-# Run full automated test suite (54 unit + integration tests)
-PYTHONPATH=src python3 -m unittest discover -s tests
+# Run full automated test suite (152 unit and integration tests)
+pytest tests/ -q
 
 # Expected Result:
-# Ran 54 tests in ~0.25s
-# OK
-# [OpenLore Integration] All 9 architectural pillars successfully executed and verified end-to-end!
+# 152 passed in ~6.0s
 ```
+
+---
+
+## 9. Desktop Application Packaging & Distribution
+
+OpenLore Studio is compiled into standalone native packages for studio workstations across macOS, Windows, and Linux.
+
+### Building & Packaging from Source
+```bash
+cd web
+
+# 1. Install Node.js dependencies
+npm install
+
+# 2. Compile client assets and generate unpacked native app directory
+npm run electron:pack
+
+# 3. Compile full installer distribution packages (.dmg, .exe, .AppImage)
+npm run electron:dist
+```
+
+### Artifact Outputs
+
+| Platform | Target Architecture | Distribution Artifact |
+|---|---|---|
+| **macOS** | Apple Silicon (`arm64`) | `web/dist-electron/OpenLore-Studio-1.5.0-arm64.dmg` & `.app` |
+| **macOS** | Intel 64-bit (`x64`) | `web/dist-electron/OpenLore-Studio-1.5.0-x64.dmg` |
+| **Windows** | Windows 10 / 11 64-bit | `web/dist-electron/OpenLore-Studio-Setup-1.5.0.exe` |
+| **Linux** | Linux x86_64 | `web/dist-electron/OpenLore-Studio-1.5.0.AppImage` & `.deb` |
+
+### Studio Deployment & Silent Installation
+* **macOS**: Distribute `OpenLore Studio.app` via MDM (Jamf / Kandji) to `/Applications`.
+* **Windows**: Execute silent install via SCCM or Intune:
+  ```powershell
+  OpenLore-Studio-Setup-1.5.0.exe /S /allusers
+  ```
+* **Linux**: Deploy `.AppImage` to `/opt/openlore-studio/` and create standard desktop entry.

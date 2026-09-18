@@ -303,4 +303,29 @@ Autodesk Maya 2024/2025 Python telemetry bridge:
 | `openlore auth` | `create-token` | Generate HMAC-SHA256 bearer tokens with RBAC roles. |
 | `openlore dcc` | `blender`, `maya`, `all` | Export native sidecars for Blender 4.x and Autodesk Maya. |
 
+---
+
+## 12. Desktop Application & IPC Runtime (`openloreDesktop`)
+
+The Electron desktop application provides a secure IPC bridge via `preload.cjs`, exposed under `window.openloreDesktop`:
+
+### Native File Dialogs & OS Integration
+* `openloreDesktop.openFileDialog(options: DialogOptions) -> Promise<OpenResult>`
+  - Prompts native OS file picker (`.usda`, `.usdc`, `.usd`, or custom file filters).
+  - Returns `{ canceled: boolean, filePaths: string[] }`.
+* `openloreDesktop.openDirectoryDialog(options: DialogOptions) -> Promise<OpenResult>`
+  - Prompts native directory chooser for setting CAS repositories or output directories.
+
+### Local Python Backend Supervisor
+* `openloreDesktop.getBackendStatus() -> Promise<BackendStatus>`
+  - Queries local Python daemon state: `{ running: boolean, pid: number | null, port: number, url: string }`.
+* `openloreDesktop.restartBackend() -> Promise<boolean>`
+  - Terminates running background daemon and respawns a fresh child process.
+* `openloreDesktop.onBackendLog(callback: (logLine: string) => void) -> Unsubscribe`
+  - Subscribes to live stdout/stderr streams from the local Python backend process.
+
+### Stage Lifecycle Events
+* `openloreDesktop.onStageOpened(callback: (stagePath: string) => void) -> Unsubscribe`
+  - Listens for macOS file associations and native menu events (`Cmd+O` / `File -> Open Stage...`), automatically switching the active workspace to 3D Layout and mounting the stage.
+
 

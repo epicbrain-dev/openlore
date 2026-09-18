@@ -29,15 +29,16 @@ def sha256_file(filepath: Path) -> str:
     return hasher.hexdigest()
 
 
-def build_release_packages(output_dir: Path) -> None:
+def build_release_packages(output_dir: Path, include_desktop: bool = False) -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
     version = __version__
+    total_steps = 7 if include_desktop else 6
     print("=" * 70)
     print(f"📦 OpenLore Release Packaging Suite - v{version}")
     print("=" * 70)
 
     # 1. Export DCC plugins
-    print("\n[1/5] Exporting Native DCC Sidecars...")
+    print(f"\n[1/{total_steps}] Exporting Native DCC Sidecars...")
     dcc_dir = REPO_ROOT / "dcc_exports"
     DCCExporter.export_all(dcc_dir)
     print("  ✅ Blender, Maya, and Houdini Solaris scripts exported.")
@@ -148,8 +149,22 @@ def build_release_packages(output_dir: Path) -> None:
                 z.write(fpath, arcname=f"openlore-installer/{fname}")
     print(f"  ✅ Created {win_zip.name} ({win_zip.stat().st_size:,} bytes)")
 
-    # 6. Generate Checksums
-    print("\n[6/6] Generating SHA-256 Checksums...")
+    # Optional: Desktop Standalone Packaging
+    if include_desktop:
+        print("\n[6/7] Building OpenLore Studio Standalone Desktop Application (Electron)...")
+        web_dir = REPO_ROOT / "web"
+        subprocess.check_call(["npm", "run", "electron:pack"], cwd=str(web_dir))
+        electron_out = web_dir / "dist-electron"
+        if electron_out.is_dir():
+            for p in electron_out.glob("*.*"):
+                if p.suffix in [".dmg", ".zip", ".exe", ".AppImage", ".deb"]:
+                    shutil.copy2(p, output_dir / p.name)
+                    print(f"  ✅ Copied desktop installer: {p.name}")
+        print("  ✅ Desktop packaging completed.")
+
+    # Generate Checksums
+    checksum_step = 7 if include_desktop else 6
+    print(f"\n[{checksum_step}/{total_steps}] Generating SHA-256 Checksums...")
     checksums_file = output_dir / "SHA256SUMS.txt"
     with open(checksums_file, "w", encoding="utf-8") as f:
         for item in sorted(output_dir.iterdir()):
@@ -164,5 +179,12 @@ def build_release_packages(output_dir: Path) -> None:
 
 
 if __name__ == "__main__":
-    out = REPO_ROOT / "dist"
-    build_release_packages(out)
+    import argparse
+    parser = argparse.ArgumentParser(description="Package OpenLore release distributions")
+    parser.add_argument("--outdir", default=str(REPO_ROOT / "dist"), help="Output directory")
+    parser.add_argument("--with-desktop", action="store_true", help="Include standalone Electron desktop application build")
+    parsed = parser.parse_args()
+
+    out = Path(parsed.outdir)
+    build_release_packages(out, include_desktop=parsed.with_desktop)
+

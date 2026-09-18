@@ -4,8 +4,10 @@ from __future__ import annotations
 
 import argparse
 import json
+import subprocess
 import sys
 import warnings
+import webbrowser
 from pathlib import Path
 from typing import Sequence
 
@@ -96,6 +98,12 @@ def create_parser() -> argparse.ArgumentParser:
     web_cmd.add_argument("--port", type=int, default=8000, help="Port to listen on (default 8000)")
     web_cmd.add_argument("--host", default="127.0.0.1", help="Host address (default 127.0.0.1)")
     web_cmd.add_argument("--static-dir", default=None, help="Directory containing compiled React frontend (auto-detected if omitted)")
+
+    # studio
+    studio_cmd = subparsers.add_parser("studio", help="Launch the OpenLore Studio standalone desktop app")
+    studio_cmd.add_argument("--port", type=int, default=8000, help="Backend port to listen on (default 8000)")
+    studio_cmd.add_argument("--host", default="127.0.0.1", help="Backend host address (default 127.0.0.1)")
+    studio_cmd.add_argument("--browser", action="store_true", help="Force launch in web browser instead of desktop app")
 
     # livelink
     livelink_cmd = subparsers.add_parser("livelink", help="Unreal Engine 5 Live Link bridge and plugin generator")
@@ -451,6 +459,40 @@ def main(args: Sequence[str] | None = None) -> int:
                     break
 
         run_server(port=parsed_args.port, host=parsed_args.host, static_dir=static_p)
+        return 0
+
+    if parsed_args.command == "studio":
+        launched = False
+        if not getattr(parsed_args, "browser", False):
+            # 1. Look for prepackaged native desktop application
+            candidates = [
+                Path("/Applications/OpenLore Studio.app"),
+                Path.home() / "Applications" / "OpenLore Studio.app",
+                Path(__file__).resolve().parent.parent.parent.parent / "web" / "dist-electron" / "mac-arm64" / "OpenLore Studio.app",
+                Path(__file__).resolve().parent.parent.parent.parent / "web" / "dist-electron" / "mac" / "OpenLore Studio.app",
+            ]
+            for app_p in candidates:
+                if app_p.is_dir():
+                    if sys.platform == "darwin":
+                        subprocess.Popen(["open", "-a", str(app_p)])
+                        print(f"[OpenLore Studio] Launched standalone desktop app: {app_p}")
+                        launched = True
+                        break
+
+            if not launched:
+                # 2. Check if local web directory has electron installed
+                web_dir = Path(__file__).resolve().parent.parent.parent.parent / "web"
+                electron_bin = web_dir / "node_modules" / ".bin" / ("electron.cmd" if sys.platform == "win32" else "electron")
+                if electron_bin.is_file():
+                    print("[OpenLore Studio] Launching OpenLore Desktop Studio via Electron runtime...")
+                    subprocess.Popen([str(electron_bin), "."], cwd=str(web_dir))
+                    launched = True
+
+        if not launched:
+            print("[OpenLore Studio] Desktop binary not found. Launching in default web browser...")
+            webbrowser.open(f"http://{parsed_args.host}:{parsed_args.port}")
+            from openlore.server.api import run_server
+            run_server(port=parsed_args.port, host=parsed_args.host)
         return 0
 
     if parsed_args.command == "livelink":
