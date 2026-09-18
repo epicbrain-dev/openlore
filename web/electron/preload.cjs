@@ -28,6 +28,34 @@ contextBridge.exposeInMainWorld('openloreDesktop', {
   getBackendStatus: () => ipcRenderer.invoke('backend:getStatus'),
 
   /**
+   * Detects host environment (OS, Python version, OpenLore venv presence).
+   */
+  detectEnvironment: () => ipcRenderer.invoke('backend:detectEnvironment'),
+
+  /**
+   * Triggers the in-app automated engine bootstrap in ~/.openlore.
+   */
+  bootstrapEngine: () => ipcRenderer.invoke('backend:bootstrapEngine'),
+
+  /**
+   * Listens for bootstrapper progress updates ({ step, totalSteps, label, percent }).
+   */
+  onInstallProgress: (callback) => {
+    const handler = (_event, progress) => callback(progress);
+    ipcRenderer.on('backend:install-progress', handler);
+    return () => ipcRenderer.removeListener('backend:install-progress', handler);
+  },
+
+  /**
+   * Listens for raw installation log lines.
+   */
+  onInstallLog: (callback) => {
+    const handler = (_event, logLine) => callback(logLine);
+    ipcRenderer.on('backend:install-log', handler);
+    return () => ipcRenderer.removeListener('backend:install-log', handler);
+  },
+
+  /**
    * Restarts the local OpenLore backend daemon.
    */
   restartBackend: () => ipcRenderer.invoke('backend:restart'),

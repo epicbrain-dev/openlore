@@ -240,6 +240,25 @@ ipcMain.handle('dialog:openDirectory', async (_event, options = {}) => {
   });
 });
 
+ipcMain.handle('backend:detectEnvironment', async () => {
+  return backendManager.detectEnvironment();
+});
+
+ipcMain.handle('backend:bootstrapEngine', async () => {
+  return backendManager.bootstrapEngine({
+    onLog: (msg) => {
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('backend:install-log', msg);
+      }
+    },
+    onProgress: (progress) => {
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('backend:install-progress', progress);
+      }
+    },
+  });
+});
+
 ipcMain.handle('backend:getStatus', async () => {
   return backendManager.getStatus();
 });

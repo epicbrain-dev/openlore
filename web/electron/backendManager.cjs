@@ -4,7 +4,7 @@
  * Handles discovery, lifecycle management, health monitoring, and graceful shutdown of the OpenLore daemon.
  */
 
-const { spawn } = require('child_process');
+const { spawn, spawnSync } = require('child_process');
 const http = require('http');
 const path = require('path');
 const fs = require('fs');
@@ -243,6 +243,135 @@ class BackendManager {
         }
         resolve();
       }, 2000);
+    });
+  }
+
+  /**
+   * Probes the system environment to determine whether Python is available,
+   * whether the OpenLore engine is installed, and current daemon health.
+   */
+  async detectEnvironment() {
+    const isWin = process.platform === 'win32';
+    const home = os.homedir();
+    const openloreDir = path.join(home, '.openlore');
+    const venvPython = isWin
+      ? path.join(openloreDir, 'venv', 'Scripts', 'python.exe')
+      : path.join(openloreDir, 'venv', 'bin', 'python3');
+
+    const isVenvInstalled = fs.existsSync(venvPython);
+    const isDaemonRunning = await this.checkHealth(this.host, this.port, 400);
+
+    // Find host Python 3 executable
+    let systemPython = null;
+    let pythonVersion = null;
+
+    const candidates = isWin
+      ? ['python.exe', 'py.exe', 'C:\\Python312\\python.exe', 'C:\\Python311\\python.exe', 'C:\\Program Files\\Python312\\python.exe']
+      : ['python3', '/opt/homebrew/bin/python3', '/usr/local/bin/python3', '/usr/bin/python3'];
+
+    for (const cand of candidates) {
+      try {
+        const check = spawnSync(cand, ['--version'], { encoding: 'utf-8', timeout: 3000 });
+        if (check.status === 0 && (check.stdout || check.stderr)) {
+          systemPython = cand;
+          pythonVersion = (check.stdout || check.stderr).trim();
+          break;
+        }
+      } catch (e) {
+        // Continue
+      }
+    }
+
+    return {
+      os: process.platform,
+      arch: process.arch,
+      home,
+      openloreDir,
+      isVenvInstalled,
+      isDaemonRunning,
+      systemPython,
+      pythonVersion,
+      canBootstrap: Boolean(systemPython),
+    };
+  }
+
+  /**
+   * Bootstraps the OpenLore engine in ~/.openlore using installer.py.
+   */
+  async bootstrapEngine({ onLog, onProgress } = {}) {
+    const env = await this.detectEnvironment();
+    if (!env.systemPython) {
+      throw new Error('Python 3.9+ was not found on your system. Please install Python to bootstrap OpenLore.');
+    }
+
+    // Locate installer.py (either bundled in web/electron/installer.py or root installer.py)
+    let installerPath = path.join(__dirname, 'installer.py');
+    if (!fs.existsSync(installerPath)) {
+      installerPath = path.resolve(__dirname, '..', '..', 'installer.py');
+    }
+    if (!fs.existsSync(installerPath)) {
+      throw new Error('Could not locate installer.py bundle.');
+    }
+
+    const home = os.homedir();
+    const openloreDir = path.join(home, '.openlore');
+    const args = [
+      installerPath,
+      '--yes',
+      '--prefix',
+      openloreDir,
+      '--no-modify-path',
+      '--with-dcc',
+      'all',
+    ];
+
+    if (onLog) onLog(`[Bootstrapper] Executing: ${env.systemPython} ${args.join(' ')}`);
+    if (onProgress) onProgress({ step: 1, totalSteps: 4, label: 'Initializing isolated Python runtime (~/.openlore/venv)...', percent: 15 });
+
+    return new Promise((resolve, reject) => {
+      const proc = spawn(env.systemPython, args, {
+        cwd: home,
+        env: {
+          ...process.env,
+          PYTHONUNBUFFERED: '1',
+        },
+      });
+
+      proc.stdout.on('data', (chunk) => {
+        const text = chunk.toString().trim();
+        if (!text) return;
+        if (onLog) onLog(text);
+
+        if (text.includes('Creating virtual environment') || text.includes('Setting up isolated')) {
+          if (onProgress) onProgress({ step: 1, totalSteps: 4, label: 'Creating isolated virtual environment...', percent: 25 });
+        } else if (text.includes('Installing OpenLore') || text.includes('pip install')) {
+          if (onProgress) onProgress({ step: 2, totalSteps: 4, label: 'Downloading & installing OpenLore v2.0.0 engine...', percent: 55 });
+        } else if (text.includes('Exporting DCC') || text.includes('Scaffolding') || text.includes('Sidecars')) {
+          if (onProgress) onProgress({ step: 3, totalSteps: 4, label: 'Configuring DCC Live Link connectors (Blender, Maya, Unreal)...', percent: 80 });
+        }
+      });
+
+      proc.stderr.on('data', (chunk) => {
+        const text = chunk.toString().trim();
+        if (text && onLog) onLog(`[Error] ${text}`);
+      });
+
+      proc.on('close', async (code) => {
+        if (code !== 0) {
+          return reject(new Error(`Installer process exited with code ${code}`));
+        }
+
+        if (onProgress) onProgress({ step: 4, totalSteps: 4, label: 'Starting OpenLore engine daemon...', percent: 95 });
+        if (onLog) onLog('[Bootstrapper] Installation complete. Launching local daemon...');
+
+        try {
+          const res = await this.start({ onLog });
+          if (onProgress) onProgress({ step: 4, totalSteps: 4, label: 'Connected! Engine is online.', percent: 100 });
+          resolve(res);
+        } catch (e) {
+          reject(e);
+        }
+      });
     });
   }
 

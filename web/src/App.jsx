@@ -9,6 +9,7 @@ import CompilationGridView from './views/CompilationGridView';
 import LookdevShadingView from './views/LookdevShadingView';
 import VFXTransportTimeline from './components/VFXTransportTimeline';
 import ShotProductionTracker from './components/ShotProductionTracker';
+import EngineSetupModal from './components/EngineSetupModal';
 
 import {
   Box,
@@ -29,6 +30,7 @@ import {
   ChevronRight,
   ChevronDown,
   Check,
+  Zap,
 } from 'lucide-react';
 
 export default function App() {
@@ -39,6 +41,8 @@ export default function App() {
   const [currentFrame, setCurrentFrame] = useState(1001);
   const [isPlaying, setIsPlaying] = useState(false);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
+  const [showSetupModal, setShowSetupModal] = useState(false);
+  const [engineStatus, setEngineStatus] = useState(null);
   const navRef = useRef(null);
   const menuRef = useRef(null);
 
@@ -49,6 +53,21 @@ export default function App() {
 
   const isDesktop = typeof window !== 'undefined' && Boolean(window.openloreDesktop?.isDesktop);
   const isMacDesktop = isDesktop && window.openloreDesktop?.platform === 'darwin';
+
+  React.useEffect(() => {
+    if (isDesktop && window.openloreDesktop?.getBackendStatus) {
+      window.openloreDesktop.getBackendStatus().then((status) => {
+        setEngineStatus(status);
+        if (window.openloreDesktop.detectEnvironment) {
+          window.openloreDesktop.detectEnvironment().then((env) => {
+            if (!env.isDaemonRunning && !env.isVenvInstalled) {
+              setShowSetupModal(true);
+            }
+          });
+        }
+      });
+    }
+  }, [isDesktop]);
 
   React.useEffect(() => {
     if (!window.openloreDesktop?.onStageOpened) return;
@@ -214,6 +233,22 @@ export default function App() {
             <span className="text-neutral-500">OCIO:</span>
             <span className="text-sky-300 font-semibold">ACEScg</span>
           </div>
+
+          {/* Desktop Engine Status / 1-Click Setup Trigger */}
+          {isDesktop && (
+            <button
+              onClick={() => setShowSetupModal(true)}
+              className={`flex items-center gap-1.5 px-2 py-1 rounded text-xs font-mono transition-all cursor-pointer shadow-sm shrink-0 border ${
+                engineStatus?.running
+                  ? 'bg-neutral-800/80 hover:bg-neutral-700 text-emerald-300 border-neutral-700'
+                  : 'bg-amber-950/40 hover:bg-amber-900/60 text-amber-300 border-amber-600/40 animate-pulse'
+              }`}
+              title="OpenLore Engine & DCC Bridges Setup"
+            >
+              <Zap className="w-3.5 h-3.5 text-amber-400" />
+              <span className="hidden lg:inline">{engineStatus?.running ? 'Engine Online' : 'Setup Engine'}</span>
+            </button>
+          )}
 
           {/* Desktop Native Open Stage Button */}
           {isDesktop && (
@@ -404,6 +439,15 @@ export default function App() {
           fps={24.0}
         />
       )}
+
+      {/* Turnkey 1-Click Engine Bootstrapper Modal */}
+      <EngineSetupModal
+        isOpen={showSetupModal}
+        onClose={() => setShowSetupModal(false)}
+        onInstalled={() => {
+          setEngineStatus({ running: true, managed: true });
+        }}
+      />
     </div>
   );
 }
