@@ -203,19 +203,19 @@ Pre-compiled packages, standalone desktop binaries, and DCC bridge archives are 
 
 | Distribution Package | Target Environment | Description |
 |---|---|---|
-| `OpenLore-Studio-1.5.0-arm64.dmg` | macOS Apple Silicon | Standalone Electron Desktop App for Apple Silicon (M1/M2/M3/M4) |
-| `OpenLore-Studio-1.5.0-x64.dmg` | macOS Intel | Standalone Electron Desktop App for Intel Macs |
-| `OpenLore-Studio-Setup-1.5.0.exe` | Windows 10 / 11 | Turnkey NSIS installer for Windows 64-bit |
-| `OpenLore-Studio-1.5.0.AppImage` | Linux x86_64 | Portable Linux desktop binary with bundled Chromium runtime |
-| `openlore-1.5.0-py3-none-any.whl` | Python 3.9+ | Universal wheel containing CLI, server, and core SDK |
-| `openlore-installer-unix-v1.5.0.tar.gz` | macOS / Linux | Turnkey installer bundle with `install.sh` & isolated runtime |
-| `openlore-installer-windows-v1.5.0.zip` | Windows 10/11 | Turnkey installer bundle with `install.ps1` & PowerShell launcher |
-| `openlore-blender-addon-v1.5.0.zip` | Blender 4.x | Standard Blender zip add-on for Live Link & CAS sync |
-| `openlore-maya-bridge-v1.5.0.zip` | Autodesk Maya 2024+ | Maya scriptJob telemetry connector |
-| `openlore-houdini-solaris-v1.5.0.zip` | SideFX Houdini 20 | Solaris USD LOPs shelf tool and telemetry bridge |
-| `openlore-unreal-livelink-v1.5.0.zip` | Unreal Engine 5.3 / 5.4 | Turnkey C++ Live Link plugin (`Plugins/OpenLoreLiveLink`) |
-| `openlore-unity-livelink-v1.5.0.zip` | Unity 6 / 2023 LTS | Unity Package Manager (UPM) client |
-| `openlore-cpp-sdk-v1.5.0.zip` | C++17 Engines / DCCs | Zero-dependency header-only C++ SDK (`openlore.hpp`) |
+| `OpenLore-Studio-2.0.0-arm64.dmg` | macOS Apple Silicon | Standalone Electron Desktop App for Apple Silicon (M1/M2/M3/M4) |
+| `OpenLore-Studio-2.0.0-x64.dmg` | macOS Intel | Standalone Electron Desktop App for Intel Macs |
+| `OpenLore-Studio-Setup-2.0.0.exe` | Windows 10 / 11 | Turnkey NSIS installer for Windows 64-bit |
+| `OpenLore-Studio-2.0.0.AppImage` | Linux x86_64 | Portable Linux desktop binary with bundled Chromium runtime |
+| `openlore-2.0.0-py3-none-any.whl` | Python 3.9+ | Universal wheel containing CLI, server, and core SDK |
+| `openlore-installer-unix-v2.0.0.tar.gz` | macOS / Linux | Turnkey installer bundle with `install.sh` & isolated runtime |
+| `openlore-installer-windows-v2.0.0.zip` | Windows 10/11 | Turnkey installer bundle with `install.ps1` & PowerShell launcher |
+| `openlore-blender-addon-v2.0.0.zip` | Blender 4.x | Standard Blender zip add-on for Live Link & CAS sync |
+| `openlore-maya-bridge-v2.0.0.zip` | Autodesk Maya 2024+ | Maya scriptJob telemetry connector |
+| `openlore-houdini-solaris-v2.0.0.zip` | SideFX Houdini 20 | Solaris USD LOPs shelf tool and telemetry bridge |
+| `openlore-unreal-livelink-v2.0.0.zip` | Unreal Engine 5.3 / 5.4 | Turnkey C++ Live Link plugin (`Plugins/OpenLoreLiveLink`) |
+| `openlore-unity-livelink-v2.0.0.zip` | Unity 6 / 2023 LTS | Unity Package Manager (UPM) client |
+| `openlore-cpp-sdk-v2.0.0.zip` | C++17 Engines / DCCs | Zero-dependency header-only C++ SDK (`openlore.hpp`) |
 
 ### Step 2: Launch OpenLore Studio
 
@@ -248,7 +248,7 @@ curl -s http://localhost:8000/api/status | python3 -m json.tool
 ```json
 {
     "status": "ONLINE",
-    "version": "1.5.0",
+    "version": "2.0.0",
     "environment": "development",
     "cas_backend": "filesystem",
     "catalog_backend": "json",

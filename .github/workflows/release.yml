@@ -57,3 +57,57 @@ jobs:
           generate_release_notes: true
           draft: false
           prerelease: false
+
+  desktop-release:
+    name: Build & Publish Desktop (${{ matrix.platform }})
+    needs: release
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: Windows
+            os: windows-latest
+            artifact_patterns: |
+              web/dist-electron/*.exe
+          - platform: Linux
+            os: ubuntu-latest
+            artifact_patterns: |
+              web/dist-electron/*.AppImage
+              web/dist-electron/*.deb
+          - platform: macOS
+            os: macos-latest
+            artifact_patterns: |
+              web/dist-electron/*.dmg
+              web/dist-electron/*.zip
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Checkout Source
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: "npm"
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install Dependencies
+        run: |
+          cd web
+          npm ci
+
+      - name: Build Electron App (${{ matrix.platform }})
+        run: |
+          cd web
+          npm run electron:dist
+
+      - name: Upload Desktop Packages to Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ matrix.artifact_patterns }}
+

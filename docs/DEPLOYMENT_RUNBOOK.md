@@ -229,15 +229,15 @@ npm run electron:dist
 
 | Platform | Target Architecture | Distribution Artifact |
 |---|---|---|
-| **macOS** | Apple Silicon (`arm64`) | `web/dist-electron/OpenLore-Studio-1.5.0-arm64.dmg` & `.app` |
-| **macOS** | Intel 64-bit (`x64`) | `web/dist-electron/OpenLore-Studio-1.5.0-x64.dmg` |
-| **Windows** | Windows 10 / 11 64-bit | `web/dist-electron/OpenLore-Studio-Setup-1.5.0.exe` |
-| **Linux** | Linux x86_64 | `web/dist-electron/OpenLore-Studio-1.5.0.AppImage` & `.deb` |
+| **macOS** | Apple Silicon (`arm64`) | `web/dist-electron/OpenLore-Studio-2.0.0-arm64.dmg` & `.app` |
+| **macOS** | Intel 64-bit (`x64`) | `web/dist-electron/OpenLore-Studio-2.0.0-x64.dmg` |
+| **Windows** | Windows 10 / 11 64-bit | `web/dist-electron/OpenLore-Studio-Setup-2.0.0.exe` |
+| **Linux** | Linux x86_64 | `web/dist-electron/OpenLore-Studio-2.0.0.AppImage` & `.deb` |
 
 ### Studio Deployment & Silent Installation
 * **macOS**: Distribute `OpenLore Studio.app` via MDM (Jamf / Kandji) to `/Applications`.
 * **Windows**: Execute silent install via SCCM or Intune:
   ```powershell
-  OpenLore-Studio-Setup-1.5.0.exe /S /allusers
+  OpenLore-Studio-Setup-2.0.0.exe /S /allusers
   ```
 * **Linux**: Deploy `.AppImage` to `/opt/openlore-studio/` and create standard desktop entry.

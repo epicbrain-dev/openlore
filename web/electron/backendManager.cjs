@@ -126,6 +126,7 @@ class BackendManager {
     const args = [...shim.argsPrefix, 'web', '--port', String(port), '--host', host];
 
     // Determine repository root or execution directory
+    const home = os.homedir();
     let workingDir = path.resolve(__dirname, '..', '..');
     let pythonPath = path.join(workingDir, 'src');
 
@@ -158,7 +159,7 @@ class BackendManager {
 
     try {
       this.process = spawn(shim.cmd, args, {
-        cwd: repoRoot,
+        cwd: workingDir,
         env,
         stdio: ['ignore', 'pipe', 'pipe'],
       });

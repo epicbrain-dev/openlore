@@ -257,7 +257,7 @@ class OpenLoreInstaller:
                 if dist_wheels:
                     cmd = [str(env_python), "-m", "pip", "install", str(dist_wheels[0])]
                 else:
-                    release_wheel = "https://github.com/epicbrain-dev/openlore/releases/download/v1.5.0/openlore-1.5.0-py3-none-any.whl"
+                    release_wheel = "https://github.com/epicbrain-dev/openlore/releases/download/v2.0.0/openlore-2.0.0-py3-none-any.whl"
                     cmd = [str(env_python), "-m", "pip", "install", release_wheel]
 
             res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)

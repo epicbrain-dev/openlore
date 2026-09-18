@@ -279,7 +279,10 @@
   - [x] Added persistent **"Workspaces (9) ▾"** dropdown selector guaranteeing 1-click access to all workspaces at any resolution.
   - [x] Added standard DCC keyboard shortcuts (`⌥1` through `⌥9` / `Alt+1` through `Alt+9`).
   - [x] Implemented macOS window-drag region isolation (`-webkit-app-region: no-drag !important` on all interactive tabs and controls).
-- [x] **Desktop App Packaging & Verification**:
+- [x] **Desktop App Packaging & Multi-Platform CI/CD**:
   - [x] Configured `electron-builder` in `web/package.json` for macOS (`.dmg`, `.app`), Windows (`.exe`), and Linux (`.AppImage`, `.deb`).
-  - [x] Packaged native macOS app: `web/dist-electron/mac-arm64/OpenLore Studio.app`.
+  - [x] Hardened background daemon supervisor in `web/electron/backendManager.cjs` for cross-platform execution.
+  - [x] Added multi-platform GitHub Actions release workflow matrix (`windows-latest`, `ubuntu-latest`, `macos-latest`) publishing desktop installers to tagged releases.
+  - [x] Cut and tagged OpenLore v2.0.0 release suite with all DCC sidecars, universal wheels, and installers.
   - [x] Verified 100% test pass rate (152/152 tests passing in `pytest tests/`).
+
