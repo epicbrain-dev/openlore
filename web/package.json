@@ -3,6 +3,7 @@
   "productName": "OpenLore Studio",
   "description": "Cross-Platform Studio Cockpit & Version Control for 3D Worlds",
   "author": "OpenLore Engineering <engineering@openlore.io>",
+  "homepage": "https://github.com/epicbrain-dev/openlore",
   "private": true,
   "version": "2.0.0",
   "type": "module",
