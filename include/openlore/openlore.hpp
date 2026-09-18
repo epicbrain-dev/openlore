@@ -48,7 +48,7 @@
 
 namespace OpenLore {
 
-constexpr const char* VERSION = "2.0.0";
+constexpr const char* VERSION = "2.0.1";
 constexpr uint32_t MAGIC_HEADER = 0x4F4C4C4B; // 'OLLK' in big-endian
 constexpr uint8_t PROTOCOL_VERSION = 1;
 

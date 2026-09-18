@@ -1,7 +1,7 @@
 # OpenLore: Comprehensive Instruction & Operations Manual
 
 _Tagline: "Git for 3D worlds, game lore, and Hollywood pipelines."_  
-_Document Version: 2.0.0 (Production Release)_  
+_Document Version: 2.0.1 (Production Release)_  
 _Target Audience: Pipeline TDs, Lead 3D Artists, Narrative Directors, Game Developers, DevOps Engineers, and Studio Systems Administrators._
 
 ---
@@ -14,9 +14,10 @@ _Target Audience: Pipeline TDs, Lead 3D Artists, Narrative Directors, Game Devel
    - [1.3 Core Technical Pillars](#13-core-technical-pillars)
 2. [Prerequisites, Installation & Environment Setup](#2-prerequisites-installation--environment-setup)
    - [2.1 Operating System & Runtime Requirements](#21-operating-system--runtime-requirements)
-   - [2.2 CLI Installation (Global & Local)](#22-cli-installation-global--local)
-   - [2.3 Environment Variables Reference](#23-environment-variables-reference)
-   - [2.4 Web Studio Cockpit Build](#24-web-studio-cockpit-build)
+   - [2.2 Desktop Application & 1-Click In-App Bootstrapper (Recommended)](#22-desktop-application--1-click-in-app-bootstrapper-recommended)
+   - [2.3 CLI Installation (Global & Local)](#23-cli-installation-global--local)
+   - [2.4 Environment Variables Reference](#24-environment-variables-reference)
+   - [2.5 Web Studio Cockpit Build](#25-web-studio-cockpit-build)
 3. [OpenLore CLI Command Reference](#3-openlore-cli-command-reference)
    - [3.1 openlore init](#31-openlore-init)
    - [3.2 openlore stage](#32-openlore-stage)

@@ -20,15 +20,15 @@ class TestOpenLoreHelmChart(unittest.TestCase):
         data = yaml.safe_load(chart_file.read_text(encoding="utf-8"))
 
         self.assertEqual(data["name"], "openlore")
-        self.assertEqual(data["version"], "2.0.0")
-        self.assertEqual(data["appVersion"], "2.0.0")
+        self.assertEqual(data["version"], "2.0.1")
+        self.assertEqual(data["appVersion"], "2.0.1")
 
     def test_values_configuration(self) -> None:
         values_file = HELM_ROOT / "values.yaml"
         self.assertTrue(values_file.exists(), "values.yaml must exist")
         data = yaml.safe_load(values_file.read_text(encoding="utf-8"))
 
-        self.assertEqual(data["image"]["tag"], "2.0.0")
+        self.assertEqual(data["image"]["tag"], "2.0.1")
         self.assertEqual(data["probes"]["livenessPath"], "/health")
         self.assertEqual(data["probes"]["readinessPath"], "/health")
         self.assertTrue(data["autoscaling"]["enabled"])

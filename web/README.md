@@ -31,10 +31,14 @@ npm run electron:pack
 # dist-electron/mac-arm64/OpenLore Studio.app
 ```
 
-### 4. Build Distribution Installers (.dmg, .exe, .AppImage)
+### 4. Build Distribution Installers (.dmg, .exe, .AppImage, .deb)
 ```bash
 npm run electron:dist
 ```
+
+> **Self-Contained Engine Distribution (v2.0.1+)**:
+> The desktop installers automatically bundle `openlore-2.0.1-py3-none-any.whl` directly inside the app package (`web/electron/`). When launched, `web/electron/backendManager.cjs` checks for an existing OpenLore installation, and if not present, executes the embedded `installer.py` using the bundled wheel—requiring zero external wheel downloads or terminal setup for artists.
+
 
 ---
 

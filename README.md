@@ -197,34 +197,29 @@ To install optional developer tools (pytest, ruff, mypy):
 pip install -e ".[dev]"
 ```
 
-### Pre-Packaged Releases & DCC Sidecars
+### Pre-Packaged Desktop Releases (Turnkey Single-Download)
 
-Pre-compiled packages, standalone desktop binaries, and DCC bridge archives are available on each [GitHub Release](https://github.com/epicbrain-dev/openlore/releases/latest):
+Pre-compiled standalone desktop binaries with built-in engine bootstrapping and DCC connectors are available on each [GitHub Release](https://github.com/epicbrain-dev/openlore/releases/latest):
 
 | Distribution Package | Target Environment | Description |
 |---|---|---|
-| `OpenLore-Studio-2.0.0-arm64.dmg` | macOS Apple Silicon | Standalone Electron Desktop App for Apple Silicon (M1/M2/M3/M4) |
-| `OpenLore-Studio-2.0.0-x64.dmg` | macOS Intel | Standalone Electron Desktop App for Intel Macs |
-| `OpenLore-Studio-Setup-2.0.0.exe` | Windows 10 / 11 | Turnkey NSIS installer for Windows 64-bit |
-| `OpenLore-Studio-2.0.0.AppImage` | Linux x86_64 | Portable Linux desktop binary with bundled Chromium runtime |
-| `openlore-2.0.0-py3-none-any.whl` | Python 3.9+ | Universal wheel containing CLI, server, and core SDK |
-| `openlore-installer-unix-v2.0.0.tar.gz` | macOS / Linux | Turnkey installer bundle with `install.sh` & isolated runtime |
-| `openlore-installer-windows-v2.0.0.zip` | Windows 10/11 | Turnkey installer bundle with `install.ps1` & PowerShell launcher |
-| `openlore-blender-addon-v2.0.0.zip` | Blender 4.x | Standard Blender zip add-on for Live Link & CAS sync |
-| `openlore-maya-bridge-v2.0.0.zip` | Autodesk Maya 2024+ | Maya scriptJob telemetry connector |
-| `openlore-houdini-solaris-v2.0.0.zip` | SideFX Houdini 20 | Solaris USD LOPs shelf tool and telemetry bridge |
-| `openlore-unreal-livelink-v2.0.0.zip` | Unreal Engine 5.3 / 5.4 | Turnkey C++ Live Link plugin (`Plugins/OpenLoreLiveLink`) |
-| `openlore-unity-livelink-v2.0.0.zip` | Unity 6 / 2023 LTS | Unity Package Manager (UPM) client |
-| `openlore-cpp-sdk-v2.0.0.zip` | C++17 Engines / DCCs | Zero-dependency header-only C++ SDK (`openlore.hpp`) |
+| `OpenLore.Studio.Setup.2.0.1.exe` | Windows 10 / 11 64-bit | Turnkey NSIS installer with bundled engine bootstrapper |
+| `OpenLore.Studio-2.0.1-arm64.dmg` | macOS Apple Silicon | Standalone Electron Desktop App for Apple Silicon (M1/M2/M3/M4) |
+| `OpenLore.Studio-2.0.1.AppImage` | Linux x86_64 | Portable Linux desktop binary with bundled Chromium runtime |
+| `openlore-studio_2.0.1_amd64.deb` | Ubuntu / Debian | Native Debian package with desktop launcher & MIME associations |
+
+> [!TIP]
+> **Zero Separate Downloads**: You no longer need to download separate plugin zip archives or Python wheels. The OpenLore Studio desktop application embeds the core engine wheel and automatically scaffolds all DCC bridges (**Blender**, **Maya**, **Houdini**, **Unreal Engine 5**, and **Unity**) via the in-app **1-Click Engine Bootstrapper**.
 
 ### Step 2: Launch OpenLore Studio
 
 **Option A: Standalone Desktop App (Electron)**
 ```bash
+# Launch downloaded installer or run from source:
 cd web
 npm run electron:dev    # Live development mode with Vite hot module reload
 # or package production desktop binary:
-npm run electron:pack   # Creates dist-electron/mac-arm64/OpenLore Studio.app
+npm run electron:pack   # Packages native desktop binary
 ```
 
 **Option B: Web Cockpit & REST API Server**
@@ -248,7 +243,7 @@ curl -s http://localhost:8000/api/status | python3 -m json.tool
 ```json
 {
     "status": "ONLINE",
-    "version": "2.0.0",
+    "version": "2.0.1",
     "environment": "development",
     "cas_backend": "filesystem",
     "catalog_backend": "json",

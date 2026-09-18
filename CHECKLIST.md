@@ -286,3 +286,20 @@
   - [x] Cut and tagged OpenLore v2.0.0 release suite with all DCC sidecars, universal wheels, and installers.
   - [x] Verified 100% test pass rate (152/152 tests passing in `pytest tests/`).
 
+---
+
+## Phase 14: Streamlined Desktop Distribution & In-App Engine Bootstrapper (v2.0.1)
+- [x] **Zero-Clutter GitHub Releases Distribution**:
+  - [x] Cleaned GitHub release asset list by removing raw wheels, source tarballs, and DCC `.zip` sidecar bundles from user download views.
+  - [x] Standardized release downloads exclusively on turnkey, platform-native desktop installers (`.exe`, `.dmg`, `.AppImage`, `.deb`).
+- [x] **Self-Contained Bundled Python Engine Wheel**:
+  - [x] Pre-built universal `openlore-2.0.1-py3-none-any.whl` (124 KB) directly embedded inside `web/electron/` desktop application packages.
+  - [x] Enhanced [installer.py](installer.py) and `web/electron/installer.py` with bundled wheel discovery (`script_dir.glob("*.whl")`) to eliminate external network dependencies for engine setup.
+- [x] **In-App 1-Click Environment Bootstrapper**:
+  - [x] When launched on systems without Python or local OpenLore environments, the desktop app supervisor detects missing dependencies and automatically runs the embedded bootstrapper.
+  - [x] DCC connectors (Blender, Maya, Houdini, Unreal, Unity) remain accessible directly within the studio app or via CLI export, removing the need for auxiliary zip downloads.
+- [x] **Documentation & Test Suite Integrity**:
+  - [x] Updated README, Manual, Deployment Runbook, and Architectural Documentation to reflect the streamlined desktop-first installation flow.
+  - [x] Verified full test suite passes (152/152 tests) and clean build pipeline across all targets.
+
+

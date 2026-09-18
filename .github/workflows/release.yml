@@ -44,16 +44,6 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: |
-            dist/openlore-*.whl
-            dist/openlore-*.tar.gz
-            dist/openlore-blender-*.zip
-            dist/openlore-maya-*.zip
-            dist/openlore-houdini-*.zip
-            dist/openlore-unreal-*.zip
-            dist/openlore-unity-*.zip
-            dist/openlore-cpp-sdk-*.zip
-            dist/SHA256SUMS.txt
           generate_release_notes: true
           draft: false
           prerelease: false
@@ -79,7 +69,6 @@ jobs:
             os: macos-latest
             artifact_patterns: |
               web/dist-electron/*.dmg
-              web/dist-electron/*.zip
 
     defaults:
       run:

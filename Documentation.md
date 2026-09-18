@@ -65,6 +65,10 @@ The studio interface integrates a standardized Hollywood animation transport tim
 
 Workspace access is guaranteed at all display resolutions through an accessible navigation bar featuring horizontal scroll chevrons (`<ChevronLeft />`, `<ChevronRight />`), automatic centering of the active tab, a persistent **"Workspaces (9) ▾"** quick dropdown menu, standard DCC keyboard shortcuts (`⌥1`–`⌥9` / `Alt+1`–`Alt+9`), and strict macOS window-drag isolation (`-webkit-app-region: no-drag !important`).
 
+### Turnkey Desktop Distribution & Engine Bootstrapper
+
+To maximize accessibility across creative studios and minimize friction for 3D animators and producers, OpenLore desktop packages (`.dmg`, `.exe`, `.AppImage`, `.deb`) are distributed as self-contained binaries. The core Python engine wheel is bundled directly within the desktop application bundle. When launched on workstations lacking pre-installed Python environments, the supervisor daemon automatically invokes the embedded bootstrapper to provision an isolated local runtime, ensuring instant out-of-the-box operation without manual terminal interaction.
+
 ### System Resilience & Recovery Protocols
 
 System resilience and error recovery depend on several distinct operational protocols:

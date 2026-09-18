@@ -229,15 +229,17 @@ npm run electron:dist
 
 | Platform | Target Architecture | Distribution Artifact |
 |---|---|---|
-| **macOS** | Apple Silicon (`arm64`) | `web/dist-electron/OpenLore-Studio-2.0.0-arm64.dmg` & `.app` |
-| **macOS** | Intel 64-bit (`x64`) | `web/dist-electron/OpenLore-Studio-2.0.0-x64.dmg` |
-| **Windows** | Windows 10 / 11 64-bit | `web/dist-electron/OpenLore-Studio-Setup-2.0.0.exe` |
-| **Linux** | Linux x86_64 | `web/dist-electron/OpenLore-Studio-2.0.0.AppImage` & `.deb` |
+| **macOS** | Apple Silicon (`arm64`) | `web/dist-electron/OpenLore.Studio-2.0.1-arm64.dmg` & `.app` |
+| **Windows** | Windows 10 / 11 64-bit | `web/dist-electron/OpenLore.Studio.Setup.2.0.1.exe` |
+| **Linux** | Linux x86_64 | `web/dist-electron/OpenLore.Studio-2.0.1.AppImage` & `.deb` |
 
 ### Studio Deployment & Silent Installation
 * **macOS**: Distribute `OpenLore Studio.app` via MDM (Jamf / Kandji) to `/Applications`.
 * **Windows**: Execute silent install via SCCM or Intune:
   ```powershell
-  OpenLore-Studio-Setup-2.0.0.exe /S /allusers
+  OpenLore.Studio.Setup.2.0.1.exe /S /allusers
   ```
 * **Linux**: Deploy `.AppImage` to `/opt/openlore-studio/` and create standard desktop entry.
+
+### In-App 1-Click Engine Bootstrapper
+All desktop installers embed `installer.py` and the core `openlore-2.0.1-py3-none-any.whl` distribution. When launched on a client workstation without pre-existing Python dependencies, the application prompts a 1-click installation that initializes `~/.openlore/venv`, installs the engine, scaffolds DCC bridges, and binds the local background daemon with zero manual terminal commands.
