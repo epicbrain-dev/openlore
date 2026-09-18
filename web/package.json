@@ -2,7 +2,7 @@
   "name": "openlore-studio",
   "productName": "OpenLore Studio",
   "description": "Cross-Platform Studio Cockpit & Version Control for 3D Worlds",
-  "author": "OpenLore Team",
+  "author": "OpenLore Engineering <engineering@openlore.io>",
   "private": true,
   "version": "2.0.0",
   "type": "module",
@@ -43,6 +43,7 @@
       ]
     },
     "linux": {
+      "maintainer": "OpenLore Engineering <engineering@openlore.io>",
       "icon": "build/icons",
       "target": [
         "AppImage",
