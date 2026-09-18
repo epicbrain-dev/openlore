@@ -237,6 +237,15 @@ class OpenLoreInstaller:
                 print(red(f"❌ Failed to locate virtual environment python at: {env_python}"))
                 return False
 
+            # Upgrade pip first — old pip (< 22) may not support hatchling editable installs
+            self.log("  • Upgrading pip in virtual environment...")
+            pip_upgrade = subprocess.run(
+                [str(env_python), "-m", "pip", "install", "--upgrade", "pip"],
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+            )
+            if pip_upgrade.returncode != 0:
+                self.log(yellow(f"  ⚠️ pip upgrade warning (non-fatal): {pip_upgrade.stderr.strip()}"))
+
             # Install OpenLore
             self.log("  • Installing OpenLore and dependencies into runtime...")
             if self.is_in_repo:
@@ -253,8 +262,9 @@ class OpenLoreInstaller:
 
             res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
             if res.returncode != 0:
-                self.log(yellow("  ⚠️ Standard pip install warning. Checking if fallback execution works..."))
-                # If offline or warning, ensure src is added to site-packages or .pth
+                self.log(yellow("  ⚠️ pip install failed. Attempting .pth fallback..."))
+                self.log(yellow(f"     pip stderr: {res.stderr.strip()}"))
+                # If offline or unavailable, link src directory via .pth file
                 site_packages = list(self.env_dir.glob("lib/python*/site-packages"))
                 if not site_packages and platform.system() == "Windows":
                     site_packages = [self.env_dir / "Lib" / "site-packages"]
@@ -262,6 +272,20 @@ class OpenLoreInstaller:
                     pth_file = site_packages[0] / "openlore.pth"
                     pth_file.write_text(str(self.repo_root / "src") + "\n", encoding="utf-8")
                     self.log(f"  ✅ Linked source directory via {pth_file.name}")
+                else:
+                    print(red("❌ pip install failed and no fallback source directory found."))
+                    print(red(f"   pip output:\n{res.stderr.strip()}"))
+                    return False
+
+            # Verify the package is actually importable before declaring success
+            check = subprocess.run(
+                [str(env_python), "-c", "import openlore"],
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+            )
+            if check.returncode != 0:
+                print(red("❌ OpenLore package installed but cannot be imported:"))
+                print(red(f"   {check.stderr.strip()}"))
+                return False
 
             self.log("  ✅ Python virtual environment and OpenLore package ready.")
             return True
@@ -412,11 +436,13 @@ if ($CurrentPath -notlike "*{bin_str}*") {{
                 self.log(green("  🎉 OpenLore CLI verified successfully!"))
                 return True
             else:
-                self.log(yellow(f"  ⚠️ CLI returned non-zero code during verification: {res.stderr}"))
-                return True
+                print(red(f"❌ CLI verification failed: {res.stderr.strip()}"))
+                print(red("   The 'openlore' command cannot be run. Installation may be incomplete."))
+                print(yellow("   Try re-running the installer or check the venv at: " + str(self.env_dir)))
+                return False
         except Exception as e:
-            self.log(yellow(f"  ⚠️ Self-test check encountered: {e}"))
-            return True
+            print(red(f"❌ Self-test check failed: {e}"))
+            return False
 
     def install(self) -> bool:
         """Full installation sequence."""
@@ -445,7 +471,10 @@ if ($CurrentPath -notlike "*{bin_str}*") {{
         self.generate_launcher_shims()
         self.configure_path()
         self.export_dcc_bridges()
-        self.verify_installation()
+
+        if not self.verify_installation():
+            print(red("\n❌ Installation verification failed. Please check the errors above."))
+            return False
 
         self.log("\n" + "=" * 73)
         self.log(green(bold("🚀 OpenLore Installation Complete!")))
