@@ -101,7 +101,15 @@ jobs:
           cd web
           npm ci
 
+      - name: Install Linux Build Dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libfuse2t64 || sudo apt-get install -y libfuse2 || true
+
       - name: Build Electron App (${{ matrix.platform }})
+        env:
+          APPIMAGE_EXTRACT_AND_RUN: "1"
         run: |
           cd web
           npm run electron:dist
